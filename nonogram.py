@@ -70,19 +70,103 @@ class Partida:
 
 class Menu:
     def __init__(self):
+        self.running = False  # No se activa hasta iniciar el menú
+        self.window = None
+        self.clock = None
+        self.font = None
+        self.boton_jugar = None
+        self.boton_cargar = None
+        self.boton_estadisticas = None
+        self.boton_salir = None
+        self.partida_en_curso = None
+        
+    def iniciar_pygame(self):
+        pygame.init()
+        self.window = pygame.display.set_mode((500, 500))
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont(None, 36)
+        
+        # Inicializa los botones después de crear la ventana
+        self.boton_jugar = Boton("Iniciar Partida", (150, 200), (200, 50), self.font, self.iniciar_partida)
+        self.boton_cargar = Boton("Cargar Partida", (150, 260), (200, 50), self.font, self.cargar_partida)
+        self.boton_estadisticas = Boton("Ver Estadísticas", (150, 320), (200, 50), self.font, self.ver_estadisticas)
+        self.boton_salir = Boton("Salir", (150, 380), (200, 50), self.font, self.salir)
+    
+    def iniciar_partida(self):
+        partida = Partida()
+        self.partida_en_curso = partida
+        partida.run()
+        
+    def dibujar_menu(self):
+        self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
+
+        titulo = self.font.render("Nonograma", True, SettingsManager.TEXT_COLOR.value)
+        self.window.blit(titulo, (150, 100))
+
+        self.boton_jugar.draw(self.window)
+        self.boton_cargar.draw(self.window)
+        self.boton_estadisticas.draw(self.window)
+        self.boton_salir.draw(self.window)
+        
+        pygame.display.flip()
+    
+    def iniciar_menu(self):
+        self.iniciar_pygame()  # Inicia pygame antes de comenzar el bucle
+        self.running = True
+        
+        while self.running:
+            self.clock.tick(60)
+            self.dibujar_menu()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                self.boton_jugar.handle_event(event)
+                self.boton_cargar.handle_event(event)
+                self.boton_estadisticas.handle_event(event)
+                self.boton_salir.handle_event(event)
+        pygame.quit()
+    
+    def ver_estadisticas(self):
+        pass        
+    def cargar_partida(self):
         pass
+    def salir(self):
+        self.running = False
     
 class Boton:
-    def __init__(self):
-        pass
-    def handle_event(self):
-        pass
+    def __init__(self, text, pos, size, font, action):
+        self.rect = pygame.Rect(pos, size)
+        self.color = SettingsManager.BUTTON_COLOR.value
+        self.hover_color = SettingsManager.BUTTON_HOVER_COLOR.value
+        self.text = text
+        self.font = font
+        self.action = action
+
+    def draw(self, surface):
+        mouse_pos = pygame.mouse.get_pos()
+        color = self.hover_color if self.rect.collidepoint(mouse_pos) else self.color
+
+        pygame.draw.rect(surface, color, self.rect)
+        text_surface = self.font.render(self.text, True, SettingsManager.TEXT_COLOR.value)
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        surface.blit(text_surface, text_rect)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                self.action() 
     
 class Estadisticas:
     def __init__(self):
-        pass
-    def actualizar(self):
-        pass
+        self.horas_jugadas = 0
+        self.niveles_superados = 0
+        self.puntuacion_total = 0
+    
+    def actualizar(self, horas, niveles, puntuacion):
+        self.horas_jugadas += horas
+        self.niveles_superados += niveles
+        self.puntuacion_total += puntuacion
 
 class Nivel:
     def __init__(self):
