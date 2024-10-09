@@ -190,7 +190,7 @@ class MenuSeleccionNivel:
         self.font = pygame.font.SysFont(None, 36)
 
         # Crear botones para los niveles
-        niveles = [Nivel(Nivel.nivel1), Nivel(Nivel.nivel2), Nivel(Nivel.nivel3), Nivel(Nivel.nivel4), Nivel(Nivel.nivel5), Nivel(Nivel.nivel6), Nivel(Nivel.nivel7), Nivel(Nivel.nivel8)]  # Aquí puedes añadir más niveles
+        niveles = [Nivel(Nivel.nivel1), Nivel(Nivel.nivel2), Nivel(Nivel.nivel3), Nivel(Nivel.nivel4), Nivel(Nivel.nivel5), Nivel(Nivel.nivel6), Nivel(Nivel.nivel7), Nivel(Nivel.nivel8), Nivel(Nivel.nivel9)]  # Aquí puedes añadir más niveles
         for i, nivel in enumerate(niveles):
             boton = Boton(f"Nivel {i+1}", (250, 200 + i * 60), (200, 50), self.font, lambda n=nivel: self.iniciar_partida(n))
             self.botones_niveles.append(boton)
@@ -382,6 +382,14 @@ class Nivel:
         [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+    nivel9 = [
+        [1, 1, 0, 0, 1, 1],
+        [1, 1, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 1, 0],
+        [0, 0, 1, 1, 0, 0]
     ]
 
     def verificar(self, tablero):
