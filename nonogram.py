@@ -78,6 +78,11 @@ class Partida:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.board.handle_click(event.pos)
+                # Redibujar el tablero después del clic
+                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+                self.board.draw(self.window)
+                pygame.display.flip()
+                # Verificar si el nivel está completado después de procesar el clic
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
                     self.running = False
