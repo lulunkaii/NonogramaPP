@@ -44,13 +44,35 @@ class Tablero:
 
 
 class Partida:
-    def __init__(self, grid_size=SettingsManager.GRID_SIZE.value, cell_size=SettingsManager.CELL_SIZE.value):
+    def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
-        self.window_size = grid_size * cell_size
+        self.grid_size = len(nivel.get_grid())
+        self.window_size = self.grid_size * cell_size
         self.window = pygame.display.set_mode((self.window_size, self.window_size))
         self.clock = pygame.time.Clock()
-        self.board = Tablero(grid_size, cell_size)
+        self.board = Tablero(self.grid_size, cell_size)
+        self.nivel = nivel
+        self.menu = menu  # Referencia al menú
         self.running = True
+        self.font = pygame.font.SysFont(None, 48)  # Fuente para el mensaje
+
+    def mostrar_mensaje(self, mensaje):
+        texto = self.font.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
+        rect = texto.get_rect(center=(self.window_size // 2, self.window_size // 2))
+        
+        # Dibujar un rectángulo blanco detrás del texto
+        padding = 20  # Espacio adicional alrededor del texto
+        background_rect = pygame.Rect(
+            rect.left - padding,
+            rect.top - padding,
+            rect.width + 2 * padding,
+            rect.height + 2 * padding
+    )
+        pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
+        
+        self.window.blit(texto, rect)
+        pygame.display.flip()
+        pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -58,6 +80,10 @@ class Partida:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.board.handle_click(event.pos)
+                if self.nivel.verificar(self.board):
+                    self.mostrar_mensaje("¡Nivel completado!")
+                    self.running = False
+                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú
 
     def run(self):
         while self.running:
@@ -93,7 +119,8 @@ class Menu:
         self.boton_salir = Boton("Salir", (150, 380), (200, 50), self.font, self.salir)
     
     def iniciar_partida(self):
-        partida = Partida()
+        nivel = Nivel(Nivel.nivel1)
+        partida = Partida(nivel, self)  # Pasar la referencia del menú
         self.partida_en_curso = partida
         partida.run()
         
@@ -128,11 +155,16 @@ class Menu:
         pygame.quit()
     
     def ver_estadisticas(self):
-        pass        
+        pass     
+
     def cargar_partida(self):
         pass
+
     def salir(self):
         self.running = False
+
+    def volver_al_menu(self):
+        self.iniciar_menu()
     
 class Boton:
     def __init__(self, text, pos, size, font, action):
@@ -169,9 +201,38 @@ class Estadisticas:
         self.puntuacion_total += puntuacion
 
 class Nivel:
-    def __init__(self):
-        pass
+    nivel1 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+    
+    def __init__(self, grid):
+        self.grid = grid
+
+    def get_grid(self):
+        return self.grid
+
+    def verificar(self, tablero):
+        for row in range(len(self.grid)):
+            for col in range(len(self.grid[row])):
+                if self.grid[row][col] == 1 and not tablero.board[row][col].clicked:
+                    return False
+                if self.grid[row][col] == 0 and tablero.board[row][col].clicked:
+                    return False
+        return True
     
 class Gamemode:
     def __init__(self):
         pass
+
+if __name__ == "__main__":
+    menu = Menu()
+    menu.iniciar_menu()
