@@ -22,7 +22,6 @@ class Celda:
     def get_color(self):
         return SettingsManager.CLICKED_COLOR.value if self.clicked else SettingsManager.DEFAULT_COLOR.value
 
-
 class Tablero:
     def __init__(self, grid_size, cell_size):
         self.grid_size = grid_size
@@ -41,7 +40,6 @@ class Tablero:
         col = pos[0] // self.cell_size
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             self.board[row][col].click()
-
 
 class Partida:
     def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
@@ -67,7 +65,7 @@ class Partida:
             rect.top - padding,
             rect.width + 2 * padding,
             rect.height + 2 * padding
-    )
+        )
         pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
         
         self.window.blit(texto, rect)
@@ -96,7 +94,7 @@ class Partida:
 
 class Menu:
     def __init__(self):
-        self.running = False  # No se activa hasta iniciar el menú
+        self.running = False
         self.window = None
         self.clock = None
         self.font = None
@@ -105,25 +103,28 @@ class Menu:
         self.boton_estadisticas = None
         self.boton_salir = None
         self.partida_en_curso = None
-        
+        self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
+
     def iniciar_pygame(self):
         pygame.init()
         self.window = pygame.display.set_mode((500, 500))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 36)
-        
-        # Inicializa los botones después de crear la ventana
-        self.boton_jugar = Boton("Iniciar Partida", (150, 200), (200, 50), self.font, self.iniciar_partida)
+
+        self.boton_jugar = Boton("Seleccionar Nivel", (150, 200), (200, 50), self.font, self.ir_a_seleccion_nivel)
         self.boton_cargar = Boton("Cargar Partida", (150, 260), (200, 50), self.font, self.cargar_partida)
         self.boton_estadisticas = Boton("Ver Estadísticas", (150, 320), (200, 50), self.font, self.ver_estadisticas)
         self.boton_salir = Boton("Salir", (150, 380), (200, 50), self.font, self.salir)
-    
-    def iniciar_partida(self):
-        nivel = Nivel(Nivel.nivel1)
-        partida = Partida(nivel, self)  # Pasar la referencia del menú
+
+    def ir_a_seleccion_nivel(self):
+        self.running = False
+        self.menu_seleccion_nivel.iniciar_menu()
+
+    def iniciar_partida(self, nivel):
+        partida = Partida(nivel, self)
         self.partida_en_curso = partida
         partida.run()
-        
+
     def dibujar_menu(self):
         self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
 
@@ -138,7 +139,7 @@ class Menu:
         pygame.display.flip()
     
     def iniciar_menu(self):
-        self.iniciar_pygame()  # Inicia pygame antes de comenzar el bucle
+        self.iniciar_pygame()
         self.running = True
         
         while self.running:
@@ -165,7 +166,75 @@ class Menu:
 
     def volver_al_menu(self):
         self.iniciar_menu()
-    
+
+class MenuSeleccionNivel:
+    def __init__(self, menu_principal):
+        self.menu_principal = menu_principal
+        self.running = False
+        self.window = None
+        self.clock = None
+        self.font = None
+        self.botones_niveles = []
+        self.scroll_offset = 0  # Offset de desplazamiento
+        self.scroll_speed = 20  # Velocidad de desplazamiento
+
+    def iniciar_pygame(self):
+        pygame.init()
+        self.window = pygame.display.set_mode((600, 600))
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont(None, 36)
+
+        # Crear botones para los niveles
+        niveles = [Nivel(Nivel.nivel1), Nivel(Nivel.nivel2), Nivel(Nivel.nivel3), Nivel(Nivel.nivel4), Nivel(Nivel.nivel5), Nivel(Nivel.nivel6), Nivel(Nivel.nivel7), Nivel(Nivel.nivel8)]  # Aquí puedes añadir más niveles
+        for i, nivel in enumerate(niveles):
+            boton = Boton(f"Nivel {i+1}", (250, 200 + i * 60), (200, 50), self.font, lambda n=nivel: self.iniciar_partida(n))
+            self.botones_niveles.append(boton)
+
+        self.boton_volver = Boton("Volver", (10, 380), (200, 50), self.font, self.volver_al_menu_principal)
+
+    def dibujar_menu(self):
+        self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
+
+        titulo = self.font.render("Seleccionar", True, SettingsManager.TEXT_COLOR.value)
+        titulo2 = self.font.render("Nivel", True, SettingsManager.TEXT_COLOR.value)
+        self.window.blit(titulo, (20, 100))
+        self.window.blit(titulo2, (20, 130))
+
+        for boton in self.botones_niveles:
+            boton.draw(self.window, self.scroll_offset)
+        self.boton_volver.draw(self.window)
+
+        pygame.display.flip()
+
+    def iniciar_menu(self):
+        self.iniciar_pygame()
+        self.running = True
+
+        while self.running:
+            self.clock.tick(60)
+            self.dibujar_menu()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 4:  # Scroll up
+                        self.scroll_offset = min(self.scroll_offset + self.scroll_speed, 0)
+                    elif event.button == 5:  # Scroll down
+                        self.scroll_offset -= self.scroll_speed
+                for boton in self.botones_niveles:
+                    boton.handle_event(event, self.scroll_offset)
+                self.boton_volver.handle_event(event)
+        pygame.quit()
+
+    def iniciar_partida(self, nivel):
+        self.running = False
+        self.menu_principal.iniciar_partida(nivel)
+
+    def volver_al_menu_principal(self):
+        self.running = False
+        self.menu_principal.iniciar_menu()
+
 class Boton:
     def __init__(self, text, pos, size, font, action):
         self.rect = pygame.Rect(pos, size)
@@ -175,19 +244,21 @@ class Boton:
         self.font = font
         self.action = action
 
-    def draw(self, surface):
+    def draw(self, surface, offset=0):
+        rect = self.rect.move(0, offset)
         mouse_pos = pygame.mouse.get_pos()
-        color = self.hover_color if self.rect.collidepoint(mouse_pos) else self.color
+        color = self.hover_color if rect.collidepoint(mouse_pos) else self.color
 
-        pygame.draw.rect(surface, color, self.rect)
+        pygame.draw.rect(surface, color, rect)
         text_surface = self.font.render(self.text, True, SettingsManager.TEXT_COLOR.value)
-        text_rect = text_surface.get_rect(center=self.rect.center)
+        text_rect = text_surface.get_rect(center=rect.center)
         surface.blit(text_surface, text_rect)
 
-    def handle_event(self, event):
+    def handle_event(self, event, offset=0):
+        rect = self.rect.move(0, offset)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                self.action() 
+            if rect.collidepoint(event.pos):
+                self.action()
     
 class Estadisticas:
     def __init__(self):
@@ -201,7 +272,26 @@ class Estadisticas:
         self.puntuacion_total += puntuacion
 
 class Nivel:
+    
+    def __init__(self, grid):
+        self.grid = grid
+
+    def get_grid(self):
+        return self.grid
     nivel1 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    ]
+    nivel2 = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -213,12 +303,81 @@ class Nivel:
         [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ]
-    
-    def __init__(self, grid):
-        self.grid = grid
+    nivel3 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
 
-    def get_grid(self):
-        return self.grid
+    ]
+    nivel4 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+    nivel5 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    ]
+    nivel6 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+    nivel7 = [
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0]
+
+    ]
+    nivel8 = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
 
     def verificar(self, tablero):
         for row in range(len(self.grid)):
