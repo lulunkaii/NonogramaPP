@@ -25,13 +25,15 @@ class Celda:
     def get_color(self):
         return SettingsManager.CLICKED_COLOR.value if self.clicked else SettingsManager.DEFAULT_COLOR.value
 
+    def get_clicked(self):
+        return self.clicked
+
 
 class Tablero:
-    def __init__(self, grid_size, cell_size, nivel):
+    def __init__(self, grid_size, cell_size, edge_size):
         self.grid_size = grid_size
         self.cell_size = cell_size
-        self.nivel = nivel
-        self.desplazamiento = ((self.nivel.get_height() + 1) // 2)
+        self.edge_size = edge_size
         self.board = [[Celda() for _ in range(grid_size)] for _ in range(grid_size)]
         self.font = pygame.font.SysFont(None, 24)
 
@@ -41,26 +43,26 @@ class Tablero:
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color()
                 pygame.draw.rect(surface, color, (
-                    (col + self.desplazamiento) * self.cell_size + 1,
-                    (row + self.desplazamiento) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
+                    (col + self.edge_size) * self.cell_size + 1,
+                    (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
         # Dibujar el marco superior
         pygame.draw.rect(surface, (0, 0, 255),
-                         (0, 0, (self.grid_size + self.desplazamiento) * self.cell_size,
-                          self.cell_size * self.desplazamiento))
+                         (0, 0, (self.grid_size + self.edge_size) * self.cell_size,
+                          self.cell_size * self.edge_size))
         # Dibujar el marco izquierdo
         pygame.draw.rect(surface, (0, 0, 255),
-                         (0, 0, self.cell_size * self.desplazamiento,
-                          (self.grid_size + self.desplazamiento) * self.cell_size))
+                         (0, 0, self.cell_size * self.edge_size,
+                          (self.grid_size + self.edge_size) * self.cell_size))
 
         # Dibujar cuadrado diagonal izquierdo
         pygame.draw.rect(surface, (0, 0, 180),
-                         (0, 0, self.desplazamiento * self.cell_size, self.desplazamiento * self.cell_size))
+                         (0, 0, self.edge_size * self.cell_size, self.edge_size * self.cell_size))
 
         # Dibujar números en el marco superior (primera fila)
         for col in range(self.grid_size):
             numero = col + 1  # Números secuenciales de izquierda a derecha
             texto = self.font.render(str(numero), True, SettingsManager.TEXT_COLOR.value)
-            text_rect = texto.get_rect(center=((col + self.desplazamiento) * self.cell_size + self.cell_size // 2,
+            text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
                                                self.cell_size // 2))  # Centrar en el marco superior
             surface.blit(texto, text_rect)
 
@@ -70,25 +72,34 @@ class Tablero:
             texto = self.font.render(str(numero), True, SettingsManager.TEXT_COLOR.value)
             text_rect = texto.get_rect(center=(self.cell_size // 2,
                                                (
-                                                           row + self.desplazamiento) * self.cell_size + self.cell_size // 2))  # Centrar en el marco izquierdo
+                                                       row + self.edge_size) * self.cell_size + self.cell_size // 2))  # Centrar en el marco izquierdo
             surface.blit(texto, text_rect)
 
     def handle_click(self, pos):
-        row = (pos[1] - self.desplazamiento * self.cell_size) // self.cell_size
-        col = (pos[0] - self.desplazamiento * self.cell_size) // self.cell_size
+        row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
+        col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             self.board[row][col].click()
+
+    def get_edge_size(self):
+        return self.edge_size
+
+    def get_grid_size(self):
+        return self.grid_size
+
+    def get_board(self):
+        return self.board
 
 
 class Partida:
     def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
         self.grid_size = len(nivel.get_grid())
-        self.window_size = ((nivel.get_height() + 1) // 2 + self.grid_size) * cell_size  # asdkajskdkasjdkasjdkaklsdj
+        self.window_size = (nivel.get_board().get_edge_size() + self.grid_size) * cell_size
         self.window = pygame.display.set_mode((self.window_size, self.window_size))
         self.clock = pygame.time.Clock()
-        self.board = Tablero(self.grid_size, cell_size, nivel)
         self.nivel = nivel
+        self.board = nivel.get_board()
         self.menu = menu  # Referencia al menú
         self.running = True
         self.font = pygame.font.SysFont(None, 48)  # Fuente para el mensaje
@@ -257,24 +268,22 @@ class Nivel:
 
     def __init__(self, grid):
         self.grid = grid
-
-    def get_grid(self):
-        return self.grid
-
-    def get_width(self):
-        return len(self.nivel1[0])
-
-    def get_height(self):
-        return len(self.nivel1)
+        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, (len(grid) + 1) // 2)
 
     def verificar(self, tablero):
         for row in range(len(self.grid)):
             for col in range(len(self.grid[row])):
-                if self.grid[row][col] == 1 and not tablero.board[row][col].clicked:
+                if self.grid[row][col] == 1 and not tablero.get_board()[row][col].get_clicked():
                     return False
-                if self.grid[row][col] == 0 and tablero.board[row][col].clicked:
+                if self.grid[row][col] == 0 and tablero.get_board()[row][col].get_clicked():
                     return False
         return True
+
+    def get_grid(self):
+        return self.grid
+
+    def get_board(self):
+        return self.tablero
 
 
 class Gamemode:
