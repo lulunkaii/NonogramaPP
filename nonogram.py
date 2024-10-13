@@ -28,15 +28,64 @@ class Celda:
     def get_clicked(self):
         return self.clicked
 
-
 class Tablero:
-    def __init__(self, grid_size, cell_size, edge_size):
+    def __init__(self, grid_size, cell_size, grid):
         self.grid_size = grid_size
         self.cell_size = cell_size
-        self.edge_size = edge_size
+        self.edge_size = self.calcular_maxima_secuencia(grid)
         self.board = [[Celda() for _ in range(grid_size)] for _ in range(grid_size)]
         self.font = pygame.font.SysFont(None, 24)
+        self.secuencias_fila = self.calcular_secuencias_fila(grid)
+        self.secuencias_columna = self.calcular_secuencias_columna(grid)
 
+    def calcular_secuencias(self, linea):
+        secuencias = 0
+        enSecuencia = False
+        for valor in linea:
+            if valor != 0 and not enSecuencia:
+                secuencias += 1
+                enSecuencia = True
+            elif valor == 0:
+                enSecuencia = False
+        return secuencias
+    
+    def calcular_maxima_secuencia(self, grid):
+        maxima_secuencia = 0
+        for fila in grid:
+            secuencia = self.calcular_secuencias(fila)
+            maxima_secuencia = max(maxima_secuencia, secuencia)
+        for columna in range(len(grid[0])):
+            secuencia = self.calcular_secuencias([grid[fila][columna] for fila in range(len(grid))])
+            maxima_secuencia = max(maxima_secuencia, secuencia)
+        return maxima_secuencia
+    
+    def calcular_secuencias_fila(self,grid):
+        secuencias = []
+        for fila in grid:
+            fila_secuencias = self.get_secuencias(fila)
+            secuencias.append(fila_secuencias)
+        return secuencias
+    
+    def calcular_secuencias_columna(self,grid):
+        secuencias = []
+        for columna in range(len(grid[0])):
+            columna_secuencias = self.get_secuencias([grid[fila][columna] for fila in range(len(grid))])
+            secuencias.append(columna_secuencias)
+        return secuencias
+    
+    def get_secuencias(self, linea):
+        secuencias = []
+        count = 0
+        for valor in linea:
+            if valor != 0:
+                count += 1
+            elif count != 0:
+                secuencias.append(count)
+                count = 0
+        if count != 0:
+            secuencias.append(count)
+        return secuencias
+    
     def draw(self, surface):
         # Dibujar la cuadricula
         for row, rowOfCells in enumerate(self.board):
@@ -46,34 +95,22 @@ class Tablero:
                     (col + self.edge_size) * self.cell_size + 1,
                     (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
         # Dibujar el marco superior
-        pygame.draw.rect(surface, (0, 0, 255),
-                         (0, 0, (self.grid_size + self.edge_size) * self.cell_size,
-                          self.cell_size * self.edge_size))
-        # Dibujar el marco izquierdo
-        pygame.draw.rect(surface, (0, 0, 255),
-                         (0, 0, self.cell_size * self.edge_size,
-                          (self.grid_size + self.edge_size) * self.cell_size))
-
-        # Dibujar cuadrado diagonal izquierdo
-        pygame.draw.rect(surface, (0, 0, 180),
-                         (0, 0, self.edge_size * self.cell_size, self.edge_size * self.cell_size))
-
-        # Dibujar números en el marco superior (primera fila)
         for col in range(self.grid_size):
-            numero = col + 1  # Números secuenciales de izquierda a derecha
-            texto = self.font.render(str(numero), True, SettingsManager.TEXT_COLOR.value)
-            text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
-                                               self.cell_size // 2))  # Centrar en el marco superior
-            surface.blit(texto, text_rect)
+            col_seq = self.secuencias_columna[col]
+            for i, num in enumerate(reversed(col_seq)):
+                texto = self.font.render(str(num), True, SettingsManager.TEXT_COLOR.value)
+                text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
+                                                   (i + 1) * self.cell_size // 2))
+                surface.blit(texto, text_rect)
 
-        # Dibujar números en el marco izquierdo (primera columna)
+        # Dibujar el marco izquierdo
         for row in range(self.grid_size):
-            numero = row + 1  # Números secuenciales de arriba hacia abajo
-            texto = self.font.render(str(numero), True, SettingsManager.TEXT_COLOR.value)
-            text_rect = texto.get_rect(center=(self.cell_size // 2,
-                                               (
-                                                       row + self.edge_size) * self.cell_size + self.cell_size // 2))  # Centrar en el marco izquierdo
-            surface.blit(texto, text_rect)
+            row_seq = self.secuencias_fila[row]
+            for i, num in enumerate(reversed(row_seq)):
+                texto = self.font.render(str(num), True, SettingsManager.TEXT_COLOR.value)
+                text_rect = texto.get_rect(center=((self.edge_size - len(row_seq) + i) * self.cell_size + self.cell_size // 2,
+                                                   (row + self.edge_size) * self.cell_size + self.cell_size // 2))
+                surface.blit(texto, text_rect)
 
     def handle_click(self, pos):
         row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
@@ -89,7 +126,6 @@ class Tablero:
 
     def get_board(self):
         return self.board
-
 
 class Partida:
     def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
@@ -146,7 +182,6 @@ class Partida:
             self.board.draw(self.window)
             pygame.display.flip()
         pygame.quit()
-
 
 class Menu:
     def __init__(self):
@@ -327,12 +362,10 @@ class Estadisticas:
         self.niveles_superados += niveles
         self.puntuacion_total += puntuacion
 
-
 class Nivel:
-    
     def __init__(self, grid):
         self.grid = grid
-        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, (len(grid) + 1) // 2)
+        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, self.grid)
 
     def get_grid(self):
         return self.grid
@@ -460,11 +493,9 @@ class Nivel:
     def get_board(self):
         return self.tablero
 
-
 class Gamemode:
     def __init__(self):
         pass
-
 
 if __name__ == "__main__":
     menu = Menu()
