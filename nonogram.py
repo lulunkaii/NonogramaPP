@@ -1,7 +1,10 @@
 import pygame
-import os
 from enum import Enum
 
+# Carga de sonidos
+pygame.mixer.init()
+sonido_seleccion = pygame.mixer.Sound("resources/sounds/seleccion.wav")
+sonido_presion = pygame.mixer.Sound("resources/sounds/presion.wav")
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
@@ -209,7 +212,7 @@ class Menu:
         for i in range(1,24):
             img = pygame.image.load("resources/title/title_"+str(i)+".png")
             img = pygame.transform.scale(img, (200, 137))
-            self.frames_titulo.append(img)
+            self.frames_titulo.append(img)    
 
     def iniciar_pygame(self):
         pygame.init()
@@ -269,14 +272,17 @@ class Menu:
                         self.running = False
                     elif event.key == pygame.K_DOWN:
                         self.boton_seleccionado = (self.boton_seleccionado + 1) % len(self.botones)
+                        sonido_seleccion.play()
                     elif event.key == pygame.K_UP:
                         self.boton_seleccionado = (self.boton_seleccionado - 1) % len(self.botones)
+                        sonido_seleccion.play()
                     elif event.key == pygame.K_RETURN:
                         self.botones[self.boton_seleccionado].action()
+                        sonido_presion.play()
                 for boton in self.botones:
                     boton.handle_event(event)
             
-            self.clock.tick(15)
+            self.clock.tick(10)
                 
         pygame.quit()
 
