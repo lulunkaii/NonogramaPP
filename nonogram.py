@@ -197,7 +197,9 @@ class Menu:
         self.partida_en_curso = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
         self.estado = "menu_principal"
-
+        # Lista de botones para seleccionado
+        self.botones = []
+        self.boton_seleccionado = 0
         # Carga y reescala de la imagen de título
         self.titulo_imagen = pygame.image.load("nonogram.png")
         self.titulo_imagen = pygame.transform.scale(self.titulo_imagen, (200, 200))
@@ -214,6 +216,8 @@ class Menu:
         self.boton_opciones = Boton("Opciones", (150, 355), (200, 50), self.font, self.opciones)
         self.boton_salir = Boton("Salir", (150, 415), (200, 50), self.font, self.salir)
 
+        self.botones = [self.boton_jugar, self.boton_cargar, self.boton_estadisticas, self.boton_opciones, self.boton_salir]
+    
     def ir_a_seleccion_nivel(self):
         self.running = False
         self.menu_seleccion_nivel.iniciar_menu()
@@ -227,14 +231,9 @@ class Menu:
         self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
 
         if self.estado == "menu_principal":
-            titulo = self.font.render("Nonograma", True, (255, 255, 255))  # Color del texto
             self.window.blit(self.titulo_imagen, (150, -50))
-
-            self.boton_jugar.draw(self.window)
-            self.boton_cargar.draw(self.window)
-            self.boton_estadisticas.draw(self.window)
-            self.boton_opciones.draw(self.window)
-            self.boton_salir.draw(self.window)
+            for i, boton in enumerate(self.botones):
+                boton.draw(self.window, seleccionado=i == self.boton_seleccionado)        
         elif self.estado == "estadisticas":
             texto = self.font.render("Estadísticas", True, (255, 255, 255))
             self.window.blit(texto, (150, 100))
@@ -258,11 +257,18 @@ class Menu:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                self.boton_jugar.handle_event(event)
-                self.boton_cargar.handle_event(event)
-                self.boton_estadisticas.handle_event(event)
-                self.boton_opciones.handle_event(event)
-                self.boton_salir.handle_event(event)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    elif event.key == pygame.K_DOWN:
+                        self.boton_seleccionado = (self.boton_seleccionado + 1) % len(self.botones)
+                    elif event.key == pygame.K_UP:
+                        self.boton_seleccionado = (self.boton_seleccionado - 1) % len(self.botones)
+                    elif event.key == pygame.K_RETURN:
+                        self.botones[self.boton_seleccionado].action()
+                for boton in self.botones:
+                    boton.handle_event(event)
+                
         pygame.quit()
 
     def ver_estadisticas(self):
@@ -357,12 +363,14 @@ class Boton:
         self.font = font
         self.action = action
 
-    def draw(self, surface, offset=0):
+    def draw(self, surface, offset=0, seleccionado=False):
         rect = self.rect.move(0, offset)
         mouse_pos = pygame.mouse.get_pos()
         color = self.hover_color if rect.collidepoint(mouse_pos) else self.color
 
-        pygame.draw.rect(surface, color, rect, border_radius=5)
+        pygame.draw.rect(surface, color, rect, border_radius=10)
+        if seleccionado:
+            pygame.draw.rect(surface, SettingsManager.BUTTON_HOVER_COLOR.value, self.rect, 3, border_radius=10)
         text_surface = self.font.render(self.text, True, SettingsManager.TEXT_COLOR.value)
         text_rect = text_surface.get_rect(center=rect.center)
         surface.blit(text_surface, text_rect)
