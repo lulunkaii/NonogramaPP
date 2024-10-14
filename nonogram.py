@@ -1,4 +1,5 @@
 import pygame
+import os
 from enum import Enum
 
 
@@ -200,9 +201,15 @@ class Menu:
         # Lista de botones para seleccionado
         self.botones = []
         self.boton_seleccionado = 0
-        # Carga y reescala de la imagen de título
-        self.titulo_imagen = pygame.image.load("nonogram.png")
-        self.titulo_imagen = pygame.transform.scale(self.titulo_imagen, (200, 200))
+        # Carga y reescala de la imagen de título y fondo
+        self.fondo_imagen = pygame.image.load("resources/lotus_pond.png")
+        self.fondo_imagen = pygame.transform.scale(self.fondo_imagen, (500, 716))
+        self.frames_titulo = []
+        self.frame_index_titulo = 0
+        for i in range(1,24):
+            img = pygame.image.load("resources/title/title_"+str(i)+".png")
+            img = pygame.transform.scale(img, (200, 137))
+            self.frames_titulo.append(img)
 
     def iniciar_pygame(self):
         pygame.init()
@@ -228,10 +235,11 @@ class Menu:
         partida.run()
 
     def dibujar_menu(self):
-        self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
+        self.window.blit(self.fondo_imagen, (0, 0))
 
         if self.estado == "menu_principal":
-            self.window.blit(self.titulo_imagen, (150, -50))
+            self.window.blit(self.frames_titulo[self.frame_index_titulo], (150, 50))
+            self.frame_index_titulo = (self.frame_index_titulo + 1) % len(self.frames_titulo)
             for i, boton in enumerate(self.botones):
                 boton.draw(self.window, seleccionado=i == self.boton_seleccionado)        
         elif self.estado == "estadisticas":
@@ -251,7 +259,6 @@ class Menu:
         self.running = True
 
         while self.running:
-            self.clock.tick(60)
             self.dibujar_menu()
 
             for event in pygame.event.get():
@@ -268,6 +275,8 @@ class Menu:
                         self.botones[self.boton_seleccionado].action()
                 for boton in self.botones:
                     boton.handle_event(event)
+            
+            self.clock.tick(15)
                 
         pygame.quit()
 
