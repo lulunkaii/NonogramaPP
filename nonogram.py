@@ -97,10 +97,10 @@ class Tablero:
         # Dibujar el marco superior
         for col in range(self.grid_size):
             col_seq = self.secuencias_columna[col]
-            for i, num in enumerate(reversed(col_seq)):
+            for i, num in enumerate(col_seq):
                 texto = self.font.render(str(num), True, SettingsManager.TEXT_COLOR.value)
                 text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
-                                                   (i + 1) * self.cell_size // 2))
+                                                   (self.edge_size - len(col_seq) + i) * self.cell_size + self.cell_size // 2))
                 surface.blit(texto, text_rect)
 
         # Dibujar el marco izquierdo
