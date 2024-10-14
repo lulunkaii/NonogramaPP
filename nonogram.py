@@ -11,8 +11,8 @@ class SettingsManager(Enum):
     MENU_BACKGROUND_COLOR = (50, 50, 50)
     TEXT_COLOR = (255, 255, 255)
     NUMBER_COLOR = (0, 255, 0)
-    BUTTON_COLOR = (100, 100, 200)
-    BUTTON_HOVER_COLOR = (150, 150, 255)
+    BUTTON_COLOR = (0, 169, 153)
+    BUTTON_HOVER_COLOR = (0, 218, 255)
 
 
 class Celda:
@@ -192,20 +192,27 @@ class Menu:
         self.boton_jugar = None
         self.boton_cargar = None
         self.boton_estadisticas = None
+        self.boton_opciones = None
         self.boton_salir = None
         self.partida_en_curso = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
+        self.estado = "menu_principal"
+
+        # Carga y reescala de la imagen de título
+        self.titulo_imagen = pygame.image.load("nonogram.png")
+        self.titulo_imagen = pygame.transform.scale(self.titulo_imagen, (200, 200))
 
     def iniciar_pygame(self):
         pygame.init()
         self.window = pygame.display.set_mode((500, 500))
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, 36)
+        self.font = pygame.font.SysFont("Trebuchet MS", 20)
 
-        self.boton_jugar = Boton("Seleccionar Nivel", (150, 200), (200, 50), self.font, self.ir_a_seleccion_nivel)
-        self.boton_cargar = Boton("Cargar Partida", (150, 260), (200, 50), self.font, self.cargar_partida)
-        self.boton_estadisticas = Boton("Ver Estadísticas", (150, 320), (200, 50), self.font, self.ver_estadisticas)
-        self.boton_salir = Boton("Salir", (150, 380), (200, 50), self.font, self.salir)
+        self.boton_jugar = Boton("Seleccionar Nivel", (150, 175), (200, 50), self.font, self.ir_a_seleccion_nivel)
+        self.boton_cargar = Boton("Cargar Partida", (150, 235), (200, 50), self.font, self.cargar_partida)
+        self.boton_estadisticas = Boton("Ver Estadísticas", (150, 295), (200, 50), self.font, self.ver_estadisticas)
+        self.boton_opciones = Boton("Opciones", (150, 355), (200, 50), self.font, self.opciones)
+        self.boton_salir = Boton("Salir", (150, 415), (200, 50), self.font, self.salir)
 
     def ir_a_seleccion_nivel(self):
         self.running = False
@@ -219,13 +226,24 @@ class Menu:
     def dibujar_menu(self):
         self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
 
-        titulo = self.font.render("Nonograma", True, SettingsManager.TEXT_COLOR.value)
-        self.window.blit(titulo, (150, 100))
+        if self.estado == "menu_principal":
+            titulo = self.font.render("Nonograma", True, (255, 255, 255))  # Color del texto
+            self.window.blit(self.titulo_imagen, (150, -50))
 
-        self.boton_jugar.draw(self.window)
-        self.boton_cargar.draw(self.window)
-        self.boton_estadisticas.draw(self.window)
-        self.boton_salir.draw(self.window)
+            self.boton_jugar.draw(self.window)
+            self.boton_cargar.draw(self.window)
+            self.boton_estadisticas.draw(self.window)
+            self.boton_opciones.draw(self.window)
+            self.boton_salir.draw(self.window)
+        elif self.estado == "estadisticas":
+            texto = self.font.render("Estadísticas", True, (255, 255, 255))
+            self.window.blit(texto, (150, 100))
+        elif self.estado == "cargar_partida":
+            texto = self.font.render("Cargar Partida", True, (255, 255, 255))
+            self.window.blit(texto, (150, 100))
+        elif self.estado == "opciones":
+            texto = self.font.render("Opciones", True, (255, 255, 255))
+            self.window.blit(texto, (150, 100))
 
         pygame.display.flip()
 
@@ -243,6 +261,7 @@ class Menu:
                 self.boton_jugar.handle_event(event)
                 self.boton_cargar.handle_event(event)
                 self.boton_estadisticas.handle_event(event)
+                self.boton_opciones.handle_event(event)
                 self.boton_salir.handle_event(event)
         pygame.quit()
 
@@ -250,6 +269,9 @@ class Menu:
         pass
 
     def cargar_partida(self):
+        pass
+
+    def opciones(self):
         pass
 
     def salir(self):
@@ -273,7 +295,7 @@ class MenuSeleccionNivel:
         pygame.init()
         self.window = pygame.display.set_mode((600, 600))
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, 36)
+        self.font = pygame.font.SysFont("Trebuchet MS", 20)
 
         # Crear botones para los niveles
         niveles = [Nivel(Nivel.nivel1), Nivel(Nivel.nivel2), Nivel(Nivel.nivel3), Nivel(Nivel.nivel4), Nivel(Nivel.nivel5), Nivel(Nivel.nivel6), Nivel(Nivel.nivel7), Nivel(Nivel.nivel8), Nivel(Nivel.nivel9)]  # Aquí puedes añadir más niveles
@@ -340,7 +362,7 @@ class Boton:
         mouse_pos = pygame.mouse.get_pos()
         color = self.hover_color if rect.collidepoint(mouse_pos) else self.color
 
-        pygame.draw.rect(surface, color, rect)
+        pygame.draw.rect(surface, color, rect, border_radius=5)
         text_surface = self.font.render(self.text, True, SettingsManager.TEXT_COLOR.value)
         text_rect = text_surface.get_rect(center=rect.center)
         surface.blit(text_surface, text_rect)
