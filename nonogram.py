@@ -1,10 +1,11 @@
 import pygame
+import os
 from enum import Enum
 
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
-    CELL_SIZE = 30
+    CELL_SIZE = 40
     DEFAULT_COLOR = (255, 255, 255)
     CLICKED_COLOR = (0, 0, 0)
     BACKGROUND_COLOR = (0, 0, 0)
@@ -13,6 +14,7 @@ class SettingsManager(Enum):
     NUMBER_COLOR = (0, 255, 0)
     BUTTON_COLOR = (100, 100, 200)
     BUTTON_HOVER_COLOR = (150, 150, 255)
+    GRID_BACKGROUND_COLOR = (0,155,155)
 
 
 class Celda:
@@ -95,6 +97,7 @@ class Tablero:
                     (col + self.edge_size) * self.cell_size + 1,
                     (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
         # Dibujar el marco superior
+        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, (self.edge_size + self.grid_size)*self.cell_size, self.   edge_size*self.cell_size))
         for col in range(self.grid_size):
             col_seq = self.secuencias_columna[col]
             for i, num in enumerate(reversed(col_seq)):
@@ -104,6 +107,7 @@ class Tablero:
                 surface.blit(texto, text_rect)
 
         # Dibujar el marco izquierdo
+        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, self.edge_size*self.cell_size, (self.edge_size + self.grid_size)*self.cell_size))
         for row in range(self.grid_size):
             row_seq = self.secuencias_fila[row]
             for i, num in enumerate(reversed(row_seq)):
@@ -275,8 +279,29 @@ class MenuSeleccionNivel:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 36)
 
+        # obtener lista de archivos de la carpeta
+        carpeta_niveles = './levels'
+        archivos_niveles = [f for f in os.listdir(carpeta_niveles) if os.path.isfile(os.path.join(carpeta_niveles, f))]
+
+        # Crear niveles
+        niveles = []
+        for archivo in archivos_niveles:
+            with open(os.path.join(carpeta_niveles, archivo), 'r') as file:
+                linea = 'a'
+                matriz = []
+                while(linea != ''):
+                    fila = []
+                    linea = file.readline()
+                    for char in linea:
+                        if(char.isdigit()):
+                            fila.append(int(char))
+
+                    if(len(fila) != 0):
+                        matriz.append(fila)
+                        
+                niveles.append(Nivel(matriz))
+
         # Crear botones para los niveles
-        niveles = [Nivel(Nivel.nivel1), Nivel(Nivel.nivel2), Nivel(Nivel.nivel3), Nivel(Nivel.nivel4), Nivel(Nivel.nivel5), Nivel(Nivel.nivel6), Nivel(Nivel.nivel7), Nivel(Nivel.nivel8), Nivel(Nivel.nivel9)]  # Aquí puedes añadir más niveles
         for i, nivel in enumerate(niveles):
             boton = Boton(f"Nivel {i+1}", (250, 200 + i * 60), (200, 50), self.font, lambda n=nivel: self.iniciar_partida(n))
             self.botones_niveles.append(boton)
@@ -369,114 +394,6 @@ class Nivel:
 
     def get_grid(self):
         return self.grid
-    nivel1 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    ]
-    nivel2 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    nivel3 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
-
-    ]
-    nivel4 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    nivel5 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    ]
-    nivel6 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    nivel7 = [
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0]
-
-    ]
-    nivel8 = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
-        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    nivel9 = [
-        [1, 1, 0, 0, 1, 1],
-        [1, 1, 0, 0, 1, 1],
-        [0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 1, 0],
-        [0, 0, 1, 1, 0, 0]
-    ]
 
     def verificar(self, tablero):
         for row in range(len(self.grid)):
