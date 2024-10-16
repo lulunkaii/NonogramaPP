@@ -1,5 +1,6 @@
 import pytest, pygame
-from nonogram import Menu, Tablero, Celda, Boton, Estadisticas
+from mecanicas import Estadisticas
+from menu import Boton
 
 # Verifica el funcionamiento del boton
 def test_boton_click():
