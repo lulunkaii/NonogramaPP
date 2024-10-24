@@ -81,7 +81,7 @@ class Tablero:
                     (col + self.edge_size) * self.cell_size + 1,
                     (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
         # Dibujar el marco superior
-        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, (self.edge_size + self.grid_size)*self.cell_size, self.   edge_size*self.cell_size))
+        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, (self.edge_size + self.grid_size)*self.cell_size, self.edge_size*self.cell_size))
         for col in range(self.grid_size):
             col_seq = self.secuencias_columna[col]
             for i, num in enumerate(col_seq):
@@ -100,6 +100,15 @@ class Tablero:
                                                    (row + self.edge_size) * self.cell_size + self.cell_size // 2))
                 surface.blit(texto, text_rect)
 
+        # Dibujar la esquina superior izquierda (previsualizacion)
+        pygame.draw.rect(surface, SettingsManager.DEFAULT_COLOR.value, (0, 0, self.edge_size*self.cell_size, self.edge_size*self.cell_size))
+        mini_cell_size = (self.cell_size * self.edge_size) // self.grid_size
+        for i, fila in enumerate(self.board):
+            for j, celda in enumerate(fila):
+                color = celda.get_color()
+                rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size, mini_cell_size, mini_cell_size)
+                pygame.draw.rect(surface, color, rect)
+                
     def handle_click(self, pos):
         row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
         col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
