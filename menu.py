@@ -163,7 +163,7 @@ class MenuSeleccionNivel:
 
         # Crear botones para los niveles
         for i, nivel in enumerate(niveles):
-            boton = Boton(f"Nivel {i+1}", (250, 200 + i * 60), (200, 50), self.font, lambda n=nivel: self.iniciar_partida(n))
+            boton = Boton(f"Nivel {i+1}", (250, 100 + i * 60), (200, 50), self.font, lambda n=nivel: self.iniciar_partida(n))
             self.botones_niveles.append(boton)
 
         self.boton_volver = Boton("Volver", (10, 380), (200, 50), self.font, self.volver_al_menu_principal)
@@ -187,7 +187,7 @@ class MenuSeleccionNivel:
         self.running = True
 
         while self.running:
-            self.clock.tick(60)
+            self.clock.tick(1000)
             self.dibujar_menu()
 
             for event in pygame.event.get():
@@ -197,7 +197,9 @@ class MenuSeleccionNivel:
                     if event.button == 4:  # Scroll up
                         self.scroll_offset = min(self.scroll_offset + self.scroll_speed, 0)
                     elif event.button == 5:  # Scroll down
-                        self.scroll_offset -= self.scroll_speed
+                        self.scroll_offset = max(self.scroll_offset - self.scroll_speed, len(self.botones_niveles)*-110 + 930)
+                        if(self.scroll_offset>0):
+                            self.scroll_offset = 0
                 for boton in self.botones_niveles:
                     boton.handle_event(event, self.scroll_offset)
                 self.boton_volver.handle_event(event)

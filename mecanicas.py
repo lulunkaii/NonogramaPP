@@ -15,7 +15,6 @@ class Celda:
     def get_color(self):
         return self.clicked
 
-
 class Tablero:
     def __init__(self, grid_size, cell_size, grid, colores):
         self.grid_size = grid_size
