@@ -1,23 +1,23 @@
-import pygame
-from utils import SettingsManager
+import pygame, math
+from utils import SettingsManager, colorCelda
 
 class Celda:
     def __init__(self):
-        self.clicked = False
+        self.clicked = colorCelda.DEFAULT
 
-    def click(self):
-        self.clicked = not self.clicked
+    #Pide color del enum colorCelda
+    def click(self, color):
+        if(color == self.clicked):
+            self.clicked = colorCelda.DEFAULT
+        else:    
+            self.clicked = color
 
     def get_color(self):
-        return SettingsManager.CLICKED_COLOR.value if self.clicked else SettingsManager.DEFAULT_COLOR.value
-    
+        return self.clicked.value
 
-    def get_clicked(self):
-        return self.clicked
-    
 
 class Tablero:
-    def __init__(self, grid_size, cell_size, grid):
+    def __init__(self, grid_size, cell_size, grid, colores):
         self.grid_size = grid_size
         self.cell_size = cell_size
         self.edge_size = self.calcular_maxima_secuencia(grid)
@@ -27,17 +27,20 @@ class Tablero:
         self.secuencias_columna = self.calcular_secuencias_columna(grid)
         self.celda_anterior = 0 
         self.color_arrastre = 0
-         
+        self.colores = colores
+        self.color_seleccionado = colorCelda.BLACK
 
     def calcular_secuencias(self, linea):
         secuencias = 0
+        valor_anterior = -1
         enSecuencia = False
         for valor in linea:
-            if valor != 0 and not enSecuencia:
+            if valor != 0 and (not enSecuencia or valor_anterior!=valor):
                 secuencias += 1
                 enSecuencia = True
             elif valor == 0:
                 enSecuencia = False
+            valor_anterior=valor
         return secuencias
     
     def calcular_maxima_secuencia(self, grid):
@@ -67,14 +70,19 @@ class Tablero:
     def get_secuencias(self, linea):
         secuencias = []
         count = 0
+        valor_anterior = 0
         for valor in linea:
-            if valor != 0:
+            if valor != 0 and (valor == valor_anterior or valor_anterior==0):
                 count += 1
             elif count != 0:
-                secuencias.append(count)
+                secuencias.append((valor_anterior,count))
                 count = 0
+                if valor != 0:
+                    count+=1
+            valor_anterior=valor
+
         if count != 0:
-            secuencias.append(count)
+            secuencias.append((valor_anterior,count))
         return secuencias
     
     def draw(self, surface):
@@ -90,7 +98,16 @@ class Tablero:
         for col in range(self.grid_size):
             col_seq = self.secuencias_columna[col]
             for i, num in enumerate(col_seq):
-                texto = self.font.render(str(num), True, SettingsManager.TEXT_COLOR.value)
+                texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
+                if num[0] == 1:
+                    texto = self.font.render(str(num[1]), True, colorCelda.BLACK.value)
+                elif num[0] == 2:
+                    texto = self.font.render(str(num[1]), True, colorCelda.RED.value)
+                elif num[0] == 3:
+                    texto = self.font.render(str(num[1]), True, colorCelda.GREEN.value)
+                elif num[0] == 4:
+                    texto = self.font.render(str(num[1]), True, colorCelda.BLUE.value)
+
                 text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
                                                    (self.edge_size - len(col_seq) + i) * self.cell_size + self.cell_size // 2))
                 surface.blit(texto, text_rect)
@@ -100,7 +117,16 @@ class Tablero:
         for row in range(self.grid_size):
             row_seq = self.secuencias_fila[row]
             for i, num in enumerate(reversed(row_seq)):
-                texto = self.font.render(str(num), True, SettingsManager.TEXT_COLOR.value)
+                texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
+                if num[0] == 1:
+                    texto = self.font.render(str(num[1]), True, colorCelda.BLACK.value)
+                elif num[0] == 2:
+                    texto = self.font.render(str(num[1]), True, colorCelda.RED.value)
+                elif num[0] == 3:
+                    texto = self.font.render(str(num[1]), True, colorCelda.GREEN.value)
+                elif num[0] == 4:
+                    texto = self.font.render(str(num[1]), True, colorCelda.BLUE.value)
+                
                 text_rect = texto.get_rect(center=((self.edge_size - len(row_seq) + i) * self.cell_size + self.cell_size // 2,
                                                    (row + self.edge_size) * self.cell_size + self.cell_size // 2))
                 surface.blit(texto, text_rect)
@@ -113,18 +139,28 @@ class Tablero:
                 color = celda.get_color()
                 rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size, mini_cell_size, mini_cell_size)
                 pygame.draw.rect(surface, color, rect)
-                
-    def handle_click(self, pos,presionando=False):
-    
+
+        # Dibujar selector de colores
+        pygame.draw.rect(surface, SettingsManager.COLOR_SELECTOR_COLOR.value, (0, (self.grid_size+self.edge_size)*self.cell_size,  (self.grid_size+self.edge_size)*self.cell_size, self.edge_size*self.cell_size))
+        for index, color in enumerate(self.colores):
+            pygame.draw.circle(surface, color.value, ((self.edge_size+0.5+index)*self.cell_size , (self.grid_size+self.edge_size+0.5)*self.cell_size), 10)
+
+    def handle_click(self, pos, presionando=False):
         row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
         col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
-        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:            
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if self.celda_anterior != self.board[row][col] and presionando:
                 if self.board[row][col].get_color() != self.color_arrastre: 
-                    self.board[row][col].click()                              
+                    self.board[row][col].click(self.color_seleccionado)                             
             elif not presionando:
-                self.board[row][col].click()
+                self.board[row][col].click(self.color_seleccionado)
                 self.color_arrastre = self.board[row][col].get_color()
+        
+        for index, color in enumerate(self.colores):
+            cx = (self.edge_size+0.5+index)*self.cell_size
+            cy = (self.grid_size+self.edge_size+0.5)*self.cell_size
+            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
+                self.color_seleccionado = color
 
             self.celda_anterior = self.board[row][col]
     
@@ -141,8 +177,9 @@ class Partida:
     def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
         self.grid_size = len(nivel.get_grid())
-        self.window_size = (nivel.get_board().get_edge_size() + self.grid_size) * cell_size
-        self.window = pygame.display.set_mode((self.window_size, self.window_size))
+        self.window_width = (nivel.get_board().get_edge_size() + self.grid_size) * cell_size
+        self.window_height = (nivel.get_board().get_edge_size() + self.grid_size + 1) * cell_size
+        self.window = pygame.display.set_mode((self.window_width, self.window_height))
         self.clock = pygame.time.Clock()
         self.nivel = nivel
         self.board = nivel.get_board()
@@ -152,7 +189,7 @@ class Partida:
 
     def mostrar_mensaje(self, mensaje):
         texto = self.font.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
-        rect = texto.get_rect(center=(self.window_size // 2, self.window_size // 2))
+        rect = texto.get_rect(center=(self.window_width // 2, self.window_height // 2))
 
         # Dibujar un rectángulo blanco detrás del texto
         padding = 20  # Espacio adicional alrededor del texto
@@ -189,30 +226,6 @@ class Partida:
         if pygame.mouse.get_pressed()[0]:
             self.board.handle_click(pygame.mouse.get_pos(),True) #
 
-                
-                                    
-            ''' elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.board.iniciar_arrastre(event.pos)
-            elif event.type == pygame.MOUSEMOTION:
-            # Continuar arrastrando si el botón izquierdo está presionado
-             if pygame.mouse.get_pressed()[0]:  # Verifica si el botón izquierdo está presionado
-                self.board.continuar_arrastre(event.pos)
-            elif event.type == pygame.MOUSEBUTTONUP and event.button ==1:
-                self.board.finalizar_arrastre() '''
-                
-            '''self.board.handle_click(event.pos)
-            
-                # Redibujar el tablero después del clic
-                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.board.draw(self.window)
-                pygame.display.flip()
-                # Verificar si el nivel está completado después de procesar el clic
-                if self.nivel.verificar(self.board):
-                    self.mostrar_mensaje("¡Nivel completado!")
-                    self.running = False
-                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
-
-
     def run(self):
         while self.running:
             self.clock.tick(1000)
@@ -237,7 +250,9 @@ class Estadisticas:
 class Nivel:
     def __init__(self, grid):
         self.grid = grid
-        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, self.grid)
+        self.colores = [colorCelda.DEFAULT, colorCelda.BLACK, colorCelda.BLUE, colorCelda.GREEN, colorCelda.RED]
+        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, self.grid, self.colores)
+        
 
     def get_grid(self):
         return self.grid
@@ -245,10 +260,17 @@ class Nivel:
     def verificar(self, tablero):
         for row in range(len(self.grid)):
             for col in range(len(self.grid[row])):
-                if self.grid[row][col] == 1 and not tablero.get_board()[row][col].get_clicked():
+                if self.grid[row][col] == 0 and tablero.get_board()[row][col].get_color() != colorCelda.DEFAULT.value:
                     return False
-                if self.grid[row][col] == 0 and tablero.get_board()[row][col].get_clicked():
+                if self.grid[row][col] == 1 and tablero.get_board()[row][col].get_color() != colorCelda.BLACK.value:
                     return False
+                if self.grid[row][col] == 2 and tablero.get_board()[row][col].get_color() != colorCelda.RED.value:
+                    return False
+                if self.grid[row][col] == 3 and tablero.get_board()[row][col].get_color() != colorCelda.GREEN.value:
+                    return False
+                if self.grid[row][col] == 4 and tablero.get_board()[row][col].get_color() != colorCelda.BLUE.value:
+                    return False
+                
         return True
 
     def get_grid(self):
