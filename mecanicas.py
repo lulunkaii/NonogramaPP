@@ -13,7 +13,7 @@ class Celda:
             self.clicked = color
 
     def get_color(self):
-        return self.clicked.value
+        return self.clicked
 
 
 class Tablero:
@@ -89,7 +89,7 @@ class Tablero:
         # Dibujar la cuadricula
         for row, rowOfCells in enumerate(self.board):
             for col, cell in enumerate(rowOfCells):
-                color = cell.get_color()
+                color = cell.get_color().value
                 pygame.draw.rect(surface, color, (
                     (col + self.edge_size) * self.cell_size + 1,
                     (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
@@ -136,7 +136,7 @@ class Tablero:
         mini_cell_size = (self.cell_size * self.edge_size) // self.grid_size
         for i, fila in enumerate(self.board):
             for j, celda in enumerate(fila):
-                color = celda.get_color()
+                color = celda.get_color().value
                 rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size, mini_cell_size, mini_cell_size)
                 pygame.draw.rect(surface, color, rect)
 
@@ -150,11 +150,14 @@ class Tablero:
         col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if self.celda_anterior != self.board[row][col] and presionando:
-                if self.board[row][col].get_color() != self.color_arrastre: 
+                if self.board[row][col].get_color().value != self.color_arrastre: 
                     self.board[row][col].click(self.color_seleccionado)                             
             elif not presionando:
                 self.board[row][col].click(self.color_seleccionado)
-                self.color_arrastre = self.board[row][col].get_color()
+                self.color_seleccionado = self.board[row][col].get_color()
+                self.color_arrastre = self.board[row][col].get_color().value
+
+            self.celda_anterior = self.board[row][col]
         
         for index, color in enumerate(self.colores):
             cx = (self.edge_size+0.5+index)*self.cell_size
@@ -162,7 +165,6 @@ class Tablero:
             if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
                 self.color_seleccionado = color
 
-            self.celda_anterior = self.board[row][col]
     
     def get_edge_size(self):
         return self.edge_size
@@ -224,7 +226,18 @@ class Partida:
                     self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
 
         if pygame.mouse.get_pressed()[0]:
-            self.board.handle_click(pygame.mouse.get_pos(),True) #
+            self.board.handle_click(pygame.mouse.get_pos(),True)
+
+            # Redibujar el tablero después del clic
+            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.board.draw(self.window)
+            pygame.display.flip()                               
+               
+            # Verificar si el nivel está completado después de procesar el clic
+            if self.nivel.verificar(self.board):
+                self.mostrar_mensaje("¡Nivel completado!")
+                self.running = False
+                self.menu.volver_al_menu()
 
     def run(self):
         while self.running:
@@ -260,15 +273,15 @@ class Nivel:
     def verificar(self, tablero):
         for row in range(len(self.grid)):
             for col in range(len(self.grid[row])):
-                if self.grid[row][col] == 0 and tablero.get_board()[row][col].get_color() != colorCelda.DEFAULT.value:
+                if self.grid[row][col] == 0 and tablero.get_board()[row][col].get_color().value != colorCelda.DEFAULT.value:
                     return False
-                if self.grid[row][col] == 1 and tablero.get_board()[row][col].get_color() != colorCelda.BLACK.value:
+                if self.grid[row][col] == 1 and tablero.get_board()[row][col].get_color().value != colorCelda.BLACK.value:
                     return False
-                if self.grid[row][col] == 2 and tablero.get_board()[row][col].get_color() != colorCelda.RED.value:
+                if self.grid[row][col] == 2 and tablero.get_board()[row][col].get_color().value != colorCelda.RED.value:
                     return False
-                if self.grid[row][col] == 3 and tablero.get_board()[row][col].get_color() != colorCelda.GREEN.value:
+                if self.grid[row][col] == 3 and tablero.get_board()[row][col].get_color().value != colorCelda.GREEN.value:
                     return False
-                if self.grid[row][col] == 4 and tablero.get_board()[row][col].get_color() != colorCelda.BLUE.value:
+                if self.grid[row][col] == 4 and tablero.get_board()[row][col].get_color().value != colorCelda.BLUE.value:
                     return False
                 
         return True
