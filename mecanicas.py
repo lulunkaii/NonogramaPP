@@ -10,9 +10,11 @@ class Celda:
 
     def get_color(self):
         return SettingsManager.CLICKED_COLOR.value if self.clicked else SettingsManager.DEFAULT_COLOR.value
+    
 
     def get_clicked(self):
         return self.clicked
+    
 
 class Tablero:
     def __init__(self, grid_size, cell_size, grid):
@@ -23,6 +25,9 @@ class Tablero:
         self.font = pygame.font.SysFont(None, 24)
         self.secuencias_fila = self.calcular_secuencias_fila(grid)
         self.secuencias_columna = self.calcular_secuencias_columna(grid)
+        self.celda_anterior = 0 
+        self.color_arrastre = 0
+         
 
     def calcular_secuencias(self, linea):
         secuencias = 0
@@ -109,12 +114,20 @@ class Tablero:
                 rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size, mini_cell_size, mini_cell_size)
                 pygame.draw.rect(surface, color, rect)
                 
-    def handle_click(self, pos):
+    def handle_click(self, pos,presionando=False):
+    
         row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
         col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
-        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
-            self.board[row][col].click()
+        if 0 <= row < self.grid_size and 0 <= col < self.grid_size:            
+            if self.celda_anterior != self.board[row][col] and presionando:
+                if self.board[row][col].get_color() != self.color_arrastre: 
+                    self.board[row][col].click()                              
+            elif not presionando:
+                self.board[row][col].click()
+                self.color_arrastre = self.board[row][col].get_color()
 
+            self.celda_anterior = self.board[row][col]
+    
     def get_edge_size(self):
         return self.edge_size
 
@@ -158,9 +171,37 @@ class Partida:
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                self.running = False 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.board.handle_click(event.pos)
+
+                # Redibujar el tablero después del clic
+                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+                self.board.draw(self.window)
+                pygame.display.flip()                               
+               
+                # Verificar si el nivel está completado después de procesar el clic
+                if self.nivel.verificar(self.board):
+                    self.mostrar_mensaje("¡Nivel completado!")
+                    self.running = False
+                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
+
+        if pygame.mouse.get_pressed()[0]:
+            self.board.handle_click(pygame.mouse.get_pos(),True) #
+
+                
+                                    
+            ''' elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self.board.iniciar_arrastre(event.pos)
+            elif event.type == pygame.MOUSEMOTION:
+            # Continuar arrastrando si el botón izquierdo está presionado
+             if pygame.mouse.get_pressed()[0]:  # Verifica si el botón izquierdo está presionado
+                self.board.continuar_arrastre(event.pos)
+            elif event.type == pygame.MOUSEBUTTONUP and event.button ==1:
+                self.board.finalizar_arrastre() '''
+                
+            '''self.board.handle_click(event.pos)
+            
                 # Redibujar el tablero después del clic
                 self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
                 self.board.draw(self.window)
@@ -169,12 +210,14 @@ class Partida:
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
                     self.running = False
-                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú
+                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
+
 
     def run(self):
         while self.running:
-            self.clock.tick(120)
-            self.handle_events()
+            self.clock.tick(1000)
+            self.handle_events()         
+
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.board.draw(self.window)
             pygame.display.flip()
