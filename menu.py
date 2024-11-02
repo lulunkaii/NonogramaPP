@@ -22,6 +22,7 @@ class Menu:
         self.partida_en_curso = None
         self.boton_crear_nivel = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
+        self.menu_crear_nivel = MenuCrearNivel(self)  # Instancia del menú de creación de niveles
         self.estado = "menu_principal"
         # Lista de botones para seleccionado
         self.botones = []
@@ -125,7 +126,8 @@ class Menu:
         self.iniciar_menu()
 
     def crear_nivel(self):
-        pass
+        self.running = False
+        self.menu_crear_nivel.iniciar_menu()
 
 class MenuSeleccionNivel:
     def __init__(self, menu_principal):
@@ -244,6 +246,66 @@ class Boton:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if rect.collidepoint(event.pos):
                 self.action()
+
+class MenuCrearNivel:
+    def __init__(self, menu_principal):
+        self.menu_principal = menu_principal
+        self.running = False
+        self.window = None
+        self.clock = None
+        self.font = None
+        self.boton_crear_nuevo = None
+        self.boton_jugar_creado = None
+
+    def iniciar_pygame(self):
+        pygame.init()
+        self.window = pygame.display.set_mode((500, 600))
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont("Trebuchet MS", 20)
+
+        self.boton_crear_nuevo = Boton("Crear nuevo nivel", (150, 200), (200, 50), self.font, self.crear_nuevo_nivel)
+        self.boton_jugar_creado = Boton("Jugar nivel creado", (150, 260), (200, 50), self.font, self.jugar_nivel_creado)
+        self.boton_volver = Boton("Volver", (150, 350), (200, 50), self.font, self.volver_al_menu_principal)
+
+    def dibujar_menu(self):
+        self.window.blit(self.menu_principal.fondo_imagen, (0, 0))
+
+        self.boton_crear_nuevo.draw(self.window)
+        self.boton_jugar_creado.draw(self.window)
+        self.boton_volver.draw(self.window)
+
+        pygame.display.flip()
+
+    def iniciar_menu(self):
+        self.iniciar_pygame()
+        self.running = True
+
+        while self.running:
+            self.clock.tick(60)
+            self.dibujar_menu()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                self.boton_crear_nuevo.handle_event(event)
+                self.boton_jugar_creado.handle_event(event)
+                self.boton_volver.handle_event(event)
+        pygame.quit()
+
+    def crear_nuevo_nivel(self):
+        # Lógica para crear un nuevo nivel
+        pass
+
+    def jugar_nivel_creado(self):
+        # Lógica para jugar un nivel creado
+        pass
+
+    def volver_al_menu_principal(self):
+        self.running = False
+        self.menu_principal.iniciar_menu()
 
 if __name__ == "__main__":
     menu = Menu()
