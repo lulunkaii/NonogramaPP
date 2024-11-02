@@ -20,6 +20,7 @@ class Menu:
         self.boton_opciones = None
         self.boton_salir = None
         self.partida_en_curso = None
+        self.boton_crear_nivel = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
         self.estado = "menu_principal"
         # Lista de botones para seleccionado
@@ -37,17 +38,18 @@ class Menu:
 
     def iniciar_pygame(self):
         pygame.init()
-        self.window = pygame.display.set_mode((500, 500))
+        self.window = pygame.display.set_mode((500, 600))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("Trebuchet MS", 20)
 
         self.boton_jugar = Boton("Seleccionar Nivel", (150, 175), (200, 50), self.font, self.ir_a_seleccion_nivel)
         self.boton_cargar = Boton("Cargar Partida", (150, 235), (200, 50), self.font, self.cargar_partida)
-        self.boton_estadisticas = Boton("Ver Estadísticas", (150, 295), (200, 50), self.font, self.ver_estadisticas)
-        self.boton_opciones = Boton("Opciones", (150, 355), (200, 50), self.font, self.opciones)
-        self.boton_salir = Boton("Salir", (150, 415), (200, 50), self.font, self.salir)
+        self.boton_crear_nivel = Boton("Crear Nivel", (150, 295), (200, 50), self.font, self.crear_nivel)
+        self.boton_estadisticas = Boton("Ver Estadísticas", (150, 355), (200, 50), self.font, self.ver_estadisticas)
+        self.boton_opciones = Boton("Opciones", (150, 415), (200, 50), self.font, self.opciones)
+        self.boton_salir = Boton("Salir", (150, 475), (200, 50), self.font, self.salir)
 
-        self.botones = [self.boton_jugar, self.boton_cargar, self.boton_estadisticas, self.boton_opciones, self.boton_salir]
+        self.botones = [self.boton_jugar, self.boton_cargar, self.boton_crear_nivel, self.boton_opciones, self.boton_salir,  self.boton_estadisticas]
     
     def ir_a_seleccion_nivel(self):
         self.running = False
@@ -121,6 +123,9 @@ class Menu:
 
     def volver_al_menu(self):
         self.iniciar_menu()
+
+    def crear_nivel(self):
+        pass
 
 class MenuSeleccionNivel:
     def __init__(self, menu_principal):
