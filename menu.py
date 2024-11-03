@@ -50,7 +50,7 @@ class Menu:
         self.boton_opciones = Boton("Opciones", (150, 415), (200, 50), self.font, self.opciones)
         self.boton_salir = Boton("Salir", (150, 475), (200, 50), self.font, self.salir)
 
-        self.botones = [self.boton_jugar, self.boton_cargar, self.boton_crear_nivel, self.boton_opciones, self.boton_salir,  self.boton_estadisticas]
+        self.botones = [self.boton_jugar, self.boton_cargar, self.boton_crear_nivel, self.boton_estadisticas, self.boton_opciones, self.boton_salir]
     
     def ir_a_seleccion_nivel(self):
         self.running = False
@@ -185,13 +185,13 @@ class MenuSeleccionNivel:
         self.boton_volver = Boton("Volver", (10, 380), (200, 50), self.font, self.volver_al_menu_principal)
 
     def dibujar_menu(self):
-        self.window.fill(SettingsManager.MENU_BACKGROUND_COLOR.value)
-
+        fondo = pygame.transform.scale(self.menu_principal.fondo_imagen, (600, 859))
+        self.window.blit(fondo, (0, 0))
         titulo = self.font.render("Seleccionar", True, SettingsManager.TEXT_COLOR.value)
         titulo2 = self.font.render("Nivel", True, SettingsManager.TEXT_COLOR.value)
         self.window.blit(titulo, (20, 100))
         self.window.blit(titulo2, (20, 130))
-
+        
         for boton in self.botones_niveles:
             boton.draw(self.window, self.scroll_offset)
         self.boton_volver.draw(self.window)
