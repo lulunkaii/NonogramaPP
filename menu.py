@@ -301,6 +301,9 @@ class MenuCrearNivel(Menu):
         self.menu_principal = menu_principal
         self.boton_crear_nuevo_nivel = None
         self.boton_jugar_nivel_creado = None
+        # Lista de botones para seleccionado
+        self.botones = []
+        self.boton_seleccionado = 0
 
     def iniciar_pygame(self):
         super().iniciar_pygame()
@@ -310,27 +313,13 @@ class MenuCrearNivel(Menu):
 
     def dibujar_menu(self):
         self.window.blit(self.menu_principal.fondo_imagen, (0, 0))
-        for boton in self.botones:
-            boton.draw(self.window)
+        for i, boton in enumerate(self.botones):
+            boton.draw(self.window, seleccionado=i == self.boton_seleccionado)  
         pygame.display.flip()
+        
 
     def iniciar_menu(self):
-        self.iniciar_pygame()
-        self.running = True
-
-        while self.running:
-            self.dibujar_menu()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.running = False
-                for boton in self.botones:
-                    boton.handle_event(event)
-            self.clock.tick(10)
-        pygame.quit()
+        super().iniciar_menu()
 
     def crear_nuevo_nivel(self):
         self.running = False
