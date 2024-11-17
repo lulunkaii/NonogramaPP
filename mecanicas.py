@@ -193,7 +193,7 @@ class Partida:
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
         self.clock = pygame.time.Clock()
         self.menu = menu  # Referencia al menú
-        self.running = True
+        self.running = False
         self.font = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
         self.button_font = pygame.font.SysFont(None, 30)
         self.save_button = Boton("Guardar y salir", ( 200 , self.bar_height/5), (200, 3 * self.bar_height/5), self.button_font, self.guardar)
@@ -304,7 +304,7 @@ class Partida:
         filename += self.pedir_mensaje("Ingrese nombre de guardado:")
         filename += ".json"
         #guardar nivel
-        board_data = [[cell.get_color().value for cell in column] for column in self.board.get_board()]
+        board_data = [[cell.get_color().value for cell in row] for row in self.board.get_board()]
         grid_data = self.nivel.get_grid()
 
         data = {
@@ -332,6 +332,7 @@ class Partida:
         self.menu.volver_al_menu()
 
     def run(self):
+        self.running = True
         while self.running:
             self.clock.tick(1000)
             self.handle_events()         
