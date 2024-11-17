@@ -1,5 +1,6 @@
 import pygame, math
-from utils import SettingsManager, colorCelda
+from utils import SettingsManager, colorCelda, Boton
+import json
 
 class Celda:
     def __init__(self):
@@ -16,7 +17,8 @@ class Celda:
         return self.clicked
 
 class Tablero:
-    def __init__(self, grid_size, cell_size, grid, colores):
+    def __init__(self, grid_size, cell_size, grid, colores, bar_height):
+        self.bar_height = bar_height
         self.grid_size = grid_size
         self.cell_size = cell_size
         self.edge_size = self.calcular_maxima_secuencia(grid)
@@ -85,15 +87,18 @@ class Tablero:
         return secuencias
     
     def draw(self, surface):
+        # Pintar la bar
+        pygame.draw.rect(surface, SettingsManager.TITLE_BAR_COLOR.value, (0, 0, (self.grid_size+self.edge_size)*self.cell_size, self.bar_height))
+
         # Dibujar la cuadricula
         for row, rowOfCells in enumerate(self.board):
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color().value
                 pygame.draw.rect(surface, color, (
                     (col + self.edge_size) * self.cell_size + 1,
-                    (row + self.edge_size) * self.cell_size + 1, self.cell_size - 2, self.cell_size - 2))
+                    (row + self.edge_size) * self.cell_size + self.bar_height + 1, self.cell_size - 2, self.cell_size - 2))
         # Dibujar el marco superior
-        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, (self.edge_size + self.grid_size)*self.cell_size, self.edge_size*self.cell_size))
+        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, self.bar_height, (self.edge_size + self.grid_size)*self.cell_size, self.edge_size*self.cell_size))
         for col in range(self.grid_size):
             col_seq = self.secuencias_columna[col]
             for i, num in enumerate(col_seq):
@@ -108,11 +113,11 @@ class Tablero:
                     texto = self.font.render(str(num[1]), True, colorCelda.BLUE.value)
 
                 text_rect = texto.get_rect(center=((col + self.edge_size) * self.cell_size + self.cell_size // 2,
-                                                   (self.edge_size - len(col_seq) + i) * self.cell_size + self.cell_size // 2))
+                                                   (self.edge_size - len(col_seq) + i) * self.cell_size + self.cell_size // 2 + self.bar_height))
                 surface.blit(texto, text_rect)
 
         # Dibujar el marco izquierdo
-        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, 0, self.edge_size*self.cell_size, (self.edge_size + self.grid_size)*self.cell_size))
+        pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, self.bar_height, self.edge_size*self.cell_size, (self.edge_size + self.grid_size)*self.cell_size))
         for row in range(self.grid_size):
             row_seq = self.secuencias_fila[row]
             for i, num in enumerate(reversed(row_seq)):
@@ -127,25 +132,25 @@ class Tablero:
                     texto = self.font.render(str(num[1]), True, colorCelda.BLUE.value)
                 
                 text_rect = texto.get_rect(center=((self.edge_size - len(row_seq) + i) * self.cell_size + self.cell_size // 2,
-                                                   (row + self.edge_size) * self.cell_size + self.cell_size // 2))
+                                                   (row + self.edge_size) * self.cell_size + self.cell_size // 2 + self.bar_height))
                 surface.blit(texto, text_rect)
 
         # Dibujar la esquina superior izquierda (previsualizacion)
-        pygame.draw.rect(surface, SettingsManager.DEFAULT_COLOR.value, (0, 0, self.edge_size*self.cell_size, self.edge_size*self.cell_size))
+        pygame.draw.rect(surface, SettingsManager.DEFAULT_COLOR.value, (0, self.bar_height, self.edge_size*self.cell_size, self.edge_size*self.cell_size))
         mini_cell_size = (self.cell_size * self.edge_size) // self.grid_size
         for i, fila in enumerate(self.board):
             for j, celda in enumerate(fila):
                 color = celda.get_color().value
-                rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size, mini_cell_size, mini_cell_size)
+                rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size + self.bar_height, mini_cell_size, mini_cell_size)
                 pygame.draw.rect(surface, color, rect)
 
         # Dibujar selector de colores
-        pygame.draw.rect(surface, SettingsManager.COLOR_SELECTOR_COLOR.value, (0, (self.grid_size+self.edge_size)*self.cell_size,  (self.grid_size+self.edge_size)*self.cell_size, self.edge_size*self.cell_size))
+        pygame.draw.rect(surface, SettingsManager.COLOR_SELECTOR_COLOR.value, (0, (self.grid_size+self.edge_size)*self.cell_size + self.bar_height,  (self.grid_size+self.edge_size)*self.cell_size, self.edge_size*self.cell_size))
         for index, color in enumerate(self.colores):
-            pygame.draw.circle(surface, color.value, ((self.edge_size+0.5+index)*self.cell_size , (self.grid_size+self.edge_size+0.5)*self.cell_size), 10)
+            pygame.draw.circle(surface, color.value, ((self.edge_size+0.5+index)*self.cell_size , (self.grid_size+self.edge_size+0.5)*self.cell_size + self.bar_height), 10)
 
     def handle_click(self, pos, presionando=False):
-        row = (pos[1] - self.edge_size * self.cell_size) // self.cell_size
+        row = (pos[1] - (self.edge_size * self.cell_size) - self.bar_height ) // self.cell_size
         col = (pos[0] - self.edge_size * self.cell_size) // self.cell_size
         if 0 <= row < self.grid_size and 0 <= col < self.grid_size:
             if self.celda_anterior != self.board[row][col] and presionando:
@@ -160,11 +165,10 @@ class Tablero:
         
         for index, color in enumerate(self.colores):
             cx = (self.edge_size+0.5+index)*self.cell_size
-            cy = (self.grid_size+self.edge_size+0.5)*self.cell_size
+            cy = (self.grid_size+self.edge_size+0.5)*self.cell_size + self.bar_height
             if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
                 self.color_seleccionado = color
 
-    
     def get_edge_size(self):
         return self.edge_size
 
@@ -174,19 +178,27 @@ class Tablero:
     def get_board(self):
         return self.board
 
+    def load_board(self, board):
+        self.board = board
+
 class Partida:
     def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
         pygame.init()
+        self.bar_height = 50
+        self.nivel = nivel
         self.grid_size = len(nivel.get_grid())
-        self.window_width = (nivel.get_board().get_edge_size() + self.grid_size) * cell_size
-        self.window_height = (nivel.get_board().get_edge_size() + self.grid_size + 1) * cell_size
+        self.board = Tablero(self.grid_size, SettingsManager.CELL_SIZE.value, nivel.get_grid(), nivel.get_colors(), self.bar_height)
+        self.window_width = (self.board.get_edge_size() + self.grid_size) * cell_size
+        self.window_height = ((self.board.get_edge_size() + self.grid_size + 1) * cell_size) + self.bar_height
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
         self.clock = pygame.time.Clock()
-        self.nivel = nivel
-        self.board = nivel.get_board()
         self.menu = menu  # Referencia al menú
         self.running = True
-        self.font = pygame.font.SysFont(None, 48)  # Fuente para el mensaje
+        self.font = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
+        self.button_font = pygame.font.SysFont(None, 30)
+        self.save_button = Boton("Guardar y salir", ( 200 , self.bar_height/5), (200, 3 * self.bar_height/5), self.button_font, self.guardar)
+        self.exit_button = Boton("Salir", ( 20 , self.bar_height/5), (150, 3 * self.bar_height/5), self.button_font, self.salir)
+        self.buttons = [self.save_button, self.exit_button]
 
     def mostrar_mensaje(self, mensaje):
         texto = self.font.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
@@ -206,6 +218,52 @@ class Partida:
         pygame.display.flip()
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
+    def pedir_mensaje(self, question):
+        font = pygame.font.SysFont(None, 30)
+        input_box = pygame.Rect((self.window_width - 140)/2, (self.window_height - 32)/2 + 50, 140, 32)
+        color_inactive = pygame.Color('lightskyblue3')
+        color_active = pygame.Color('dodgerblue2')
+        color = color_inactive
+        active = False
+        text = ''
+        done = False
+
+        while not done:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # Si el usuario hace clic en el cuadro de entrada
+                    if input_box.collidepoint(event.pos):
+                        active = not active
+                    else:
+                        active = False
+                    color = color_active if active else color_inactive
+                if event.type == pygame.KEYDOWN:
+                    if active:
+                        if event.key == pygame.K_RETURN:
+                            done = True
+                        elif event.key == pygame.K_BACKSPACE:
+                            text = text[:-1]
+                        else:
+                            text += event.unicode
+
+            pygame.draw.rect(self.window, (0,0,0), ((self.window_width - 140)//2 - 40, (self.window_height - 32)//2 + 10, 320, 112))
+            # Renderizar el texto de la pregunta
+            question_surface = font.render(question, True, pygame.Color('white'))
+            self.window.blit(question_surface, (input_box.x - 30, input_box.y - 30))
+            # Renderizar el texto del usuario
+            txt_surface = font.render(text, True, color)
+            width = max(200, txt_surface.get_width() + 10)
+            input_box.w = width
+            self.window.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+            pygame.draw.rect(self.window, color, input_box, 2)
+
+            pygame.display.flip()
+
+        return text
+
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -215,7 +273,7 @@ class Partida:
 
                 # Redibujar el tablero después del clic
                 self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.board.draw(self.window)
+                self.draw()
                 pygame.display.flip()                               
                
                 # Verificar si el nivel está completado después de procesar el clic
@@ -223,29 +281,65 @@ class Partida:
                     self.mostrar_mensaje("¡Nivel completado!")
                     self.running = False
                     self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
+            
+            for button in self.buttons:
+                button.handle_event(event)
+            
 
         if pygame.mouse.get_pressed()[0]:
             self.board.handle_click(pygame.mouse.get_pos(),True)
 
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-            self.board.draw(self.window)
+            self.draw()
             pygame.display.flip()                               
                
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar(self.board):
                 self.mostrar_mensaje("¡Nivel completado!")
-                self.running = False
-                self.menu.volver_al_menu()
+                self.salir()
+
+    def guardar(self):
+        filename = "saved_levels/"
+        filename += self.pedir_mensaje("Ingrese nombre de guardado:")
+        filename += ".json"
+        #guardar nivel
+        board_data = [[cell.get_color().value for cell in column] for column in self.board.get_board()]
+        grid_data = self.nivel.get_grid()
+
+        data = {
+            'board': board_data,
+            'grid': grid_data
+        }
+
+        with open(filename, 'w') as file:
+            json.dump(data, file)
+
+        self.mostrar_mensaje("Partida guardada exitosamente.")
+        self.salir()
+
+
+    def cargar(self, board):
+        self.board.load_board(board)
+
+    def draw(self):
+        self.board.draw(self.window)
+        for button in self.buttons:
+            button.draw(self.window)
+
+    def salir(self):
+        self.running = False
+        self.menu.volver_al_menu()
 
     def run(self):
         while self.running:
             self.clock.tick(1000)
             self.handle_events()         
-
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-            self.board.draw(self.window)
+            self.draw()
+
             pygame.display.flip()
+
         pygame.quit()
 
 class Estadisticas:
@@ -263,11 +357,6 @@ class Nivel:
     def __init__(self, grid):
         self.grid = grid
         self.colores = [colorCelda.DEFAULT, colorCelda.BLACK, colorCelda.BLUE, colorCelda.GREEN, colorCelda.RED]
-        self.tablero = Tablero(len(grid), SettingsManager.CELL_SIZE.value, self.grid, self.colores)
-        
-
-    def get_grid(self):
-        return self.grid
 
     def verificar(self, tablero):
         for row in range(len(self.grid)):
@@ -287,9 +376,9 @@ class Nivel:
 
     def get_grid(self):
         return self.grid
-
-    def get_board(self):
-        return self.tablero
+    
+    def get_colors(self):
+        return self.colores
 
 class Gamemode:
     def __init__(self):

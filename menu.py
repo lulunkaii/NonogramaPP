@@ -1,7 +1,7 @@
 import pygame
 import os
 from mecanicas import Partida, Nivel
-from utils import SettingsManager, colorCelda
+from utils import SettingsManager, colorCelda, Boton
 
 # Carga de sonidos
 pygame.mixer.init()
@@ -229,39 +229,12 @@ class MenuSeleccionNivel:
         self.running = False
         self.menu_principal.iniciar_menu()
 
-class Boton:
-    def __init__(self, text, pos, size, font, action):
-        self.rect = pygame.Rect(pos, size)
-        self.color = SettingsManager.BUTTON_COLOR.value
-        self.hover_color = SettingsManager.BUTTON_HOVER_COLOR.value
-        self.text = text
-        self.font = font
-        self.action = action
-
-    def draw(self, surface, offset=0, seleccionado=False):
-        rect = self.rect.move(0, offset)
-        mouse_pos = pygame.mouse.get_pos()
-        color = self.hover_color if rect.collidepoint(mouse_pos) else self.color
-
-        pygame.draw.rect(surface, color, rect, border_radius=10)
-        if seleccionado:
-            pygame.draw.rect(surface, SettingsManager.BUTTON_HOVER_COLOR.value, self.rect, 3, border_radius=10)
-        text_surface = self.font.render(self.text, True, SettingsManager.TEXT_COLOR.value)
-        text_rect = text_surface.get_rect(center=rect.center)
-        surface.blit(text_surface, text_rect)
-
-    def handle_event(self, event, offset=0):
-        rect = self.rect.move(0, offset)
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if rect.collidepoint(event.pos):
-                self.action()
-
 class CrearNivel(Partida):
     def __init__(self, nivel, menu_principal):
         super().__init__(nivel, menu_principal)
         self.window_height = 500  # Aumentar la altura de la ventana
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
-        self.boton_guardar = Boton("Guardar Nivel", (self.window_width // 2 - 100, self.window_height - 60), (200, 50), self.font, self.guardar_nivel)
+        self.boton_guardar = Boton("Guardar Nivel", (self.window_width // 2 - 100, self.window_height - 60), (240, 50), self.font, self.guardar_nivel)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -277,7 +250,7 @@ class CrearNivel(Partida):
 
     def run(self):
         while self.running:
-            self.clock.tick(1000)
+            self.clock.tick(60)
             self.handle_events()
 
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
