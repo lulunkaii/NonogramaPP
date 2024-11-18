@@ -18,8 +18,8 @@ class Menu:
         self.boton_estadisticas = None
         self.boton_opciones = None
         self.boton_salir = None
-        self.partida_en_curso = None
         self.boton_crear_nivel = None
+        self.partida_en_curso = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
         self.menu_crear_nivel = MenuCrearNivel(self)  # Instancia del menú de creación de niveles
         self.menu_cargar_partida = MenuCargarNivel(self)
@@ -53,7 +53,7 @@ class Menu:
         self.botones = [self.boton_jugar, self.boton_cargar, self.boton_crear_nivel, self.boton_estadisticas, self.boton_opciones, self.boton_salir]
     
     def ir_a_seleccion_nivel(self):
-        self.running = False
+        self.cerrar_menu()
         self.menu_seleccion_nivel.iniciar_menu()
 
     def iniciar_partida(self, nivel):
@@ -112,23 +112,24 @@ class Menu:
         pygame.quit()
 
     def ver_estadisticas(self):
+        self.cerrar_menu()
         pass
 
     def cargar_partida(self):
-        self.running = False
+        self.cerrar_menu()
         self.menu_cargar_partida.run_menu()
 
     def opciones(self):
         pass
 
     def salir(self):
-        self.running = False
+        self.cerrar_menu()
 
     def volver_al_menu(self):
         self.iniciar_menu()
 
     def crear_nivel(self):
-        self.running = False
+        self.cerrar_menu()
         self.menu_crear_nivel.iniciar_menu()
 
     def crear_nuevo_nivel(self):
@@ -138,7 +139,17 @@ class Menu:
 
     def jugar_nivel_creado(self):
         # Implementar la lógica para jugar un nivel creado
-        pass
+        self.cerrar_menu() # Para que no se creen botones superpuestos
+
+    def cerrar_menu(self):
+        self.running = False
+        self.botones = []
+        self.boton_jugar = None
+        self.boton_cargar = None
+        self.boton_estadisticas = None
+        self.boton_opciones = None
+        self.boton_salir = None
+        self.boton_crear_nivel = None
 
 class MenuSeleccionNivel:
     def __init__(self, menu_principal):
@@ -225,12 +236,17 @@ class MenuSeleccionNivel:
         pygame.quit()
 
     def iniciar_partida(self, nivel):
-        self.running = False
+        self.cerrar_menu()
         self.menu_principal.iniciar_partida(nivel)
 
     def volver_al_menu_principal(self):
-        self.running = False
+        self.cerrar_menu()
         self.menu_principal.iniciar_menu()
+    
+    def cerrar_menu(self):
+        self.running = False
+        self.niveles = []
+        self.botones_niveles = []
 
 class MenuCargarNivel():
     def __init__(self, menu_principal):
@@ -333,7 +349,7 @@ class MenuCargarNivel():
         pygame.display.flip()
 
     def iniciar_partida(self, game):
-        partida = Partida(game[1], self.menu)
+        partida = Partida(game[1], self.menu, url=game[0])
         partida.cargar(game[2])
         self.cerrar_menu()
         partida.run()

@@ -1,6 +1,5 @@
-import pygame, math
+import pygame, math, json, os
 from utils import SettingsManager, colorCelda, Boton
-import json
 
 class Celda:
     def __init__(self):
@@ -182,8 +181,12 @@ class Tablero:
         self.board = board
 
 class Partida:
-    def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value):
+    def __init__(self, nivel, menu, cell_size=SettingsManager.CELL_SIZE.value, url = None):
         pygame.init()
+        if url:
+            self.url = url + ".json"
+        else:
+            self.url = None
         self.bar_height = 50
         self.nivel = nivel
         self.grid_size = len(nivel.get_grid())
@@ -279,8 +282,16 @@ class Partida:
                 # Verificar si el nivel está completado después de procesar el clic
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
-                    self.running = False
-                    self.menu.volver_al_menu()  # Llamar al método del menú para volver al menú '''
+                    if self.url:
+                        url = os.path.join("./saved_levels", self.url)
+                        try:
+                            os.remove(url)
+                        except FileNotFoundError:
+                            print(f"Archivo {url} no existe.")
+                        except Exception as e:
+                            print(f"Ocurrio un error al tratar de eliminar el archivo {url}: {e} ")
+
+                    self.salir()
             
             for button in self.buttons:
                 button.handle_event(event)
@@ -297,6 +308,14 @@ class Partida:
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar(self.board):
                 self.mostrar_mensaje("¡Nivel completado!")
+                if self.url:
+                    url = os.path.join("./saved_levels", self.url)
+                    try:
+                        os.remove(url)
+                    except FileNotFoundError:
+                        print(f"Archivo {url} no existe.")
+                    except Exception as e:
+                        print(f"Ocurrio un error al tratar de eliminar el archivo {url}: {e} ")
                 self.salir()
 
     def guardar(self):
