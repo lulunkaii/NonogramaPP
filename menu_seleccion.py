@@ -1,6 +1,7 @@
 import pygame
 from menu import Menu
 from utils import SettingsManager
+from enum import Enum
 
 # Evaluar si es conveniente fusionar este boton con el genérico
 # Ventajas de la fusión: Reutilización de código
@@ -124,5 +125,27 @@ def main():
 
     pygame.quit()
 
+class AmbienteEnum(Enum):
+    INVIERNO = "invierno"
+    MONTAÑA = "montaña"
+    PRADO = "prado"
+
+class Ambiente:
+    def __init__(self, tipo: AmbienteEnum, fondo, musica, niveles):
+        self.tipo = tipo
+        self.fondo = pygame.image.load(fondo)
+        self.musica = musica
+        self.niveles = niveles
+
+    def cargar_musica(self):
+        pygame.mixer.music.load(self.musica)
+        pygame.mixer.music.play(-1)
+
+    def get_fondo(self):
+        return self.fondo
+
+    def get_niveles(self):
+        return self.niveles
+    
 if __name__ == "__main__":
     main()
