@@ -377,6 +377,7 @@ class Nivel:
     def __init__(self, grid):
         self.grid = grid
         self.colores = [colorCelda.DEFAULT, colorCelda.BLACK, colorCelda.BLUE, colorCelda.GREEN, colorCelda.RED]
+        self.completado = False
 
     def verificar(self, tablero):
         for row in range(len(self.grid)):
@@ -391,7 +392,7 @@ class Nivel:
                     return False
                 if self.grid[row][col] == 4 and tablero.get_board()[row][col].get_color().value != colorCelda.BLUE.value:
                     return False
-                
+        self.completado = True
         return True
 
     def get_grid(self):
@@ -399,6 +400,9 @@ class Nivel:
     
     def get_colors(self):
         return self.colores
+    
+    def isCompleted(self):
+        return self.completado
 
 class Gamemode:
     def __init__(self):
