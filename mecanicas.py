@@ -198,9 +198,9 @@ class Partida:
         self.menu = menu  # Referencia al menú
         self.running = False
         self.font = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
-        self.button_font = pygame.font.SysFont(None, 30)
-        self.save_button = Boton("Guardar y salir", ( 200 , self.bar_height/5), (200, 3 * self.bar_height/5), self.button_font, self.guardar)
-        self.exit_button = Boton("Salir", ( 20 , self.bar_height/5), (150, 3 * self.bar_height/5), self.button_font, self.salir)
+        self.button_font = pygame.font.SysFont(None, self.window_height // 100)
+        self.save_button = Boton("Guardar y salir", (5 * (self.window_width // 9), self.bar_height/5), (3* (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.guardar)
+        self.exit_button = Boton("Salir", (self.window_width // 9, self.bar_height/5), (3 * (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.salir)
         self.buttons = [self.save_button, self.exit_button]
 
     def mostrar_mensaje(self, mensaje):
