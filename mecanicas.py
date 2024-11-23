@@ -455,6 +455,19 @@ class Estadisticas:
             print("Error al guardar las estadísticas.")
             return
         
+    def getSegundosJugados(self):
+        return self.segundos_jugados
+    
+    def getNivelesSuperados(self):
+        return self.niveles_superados
+    
+    def getPuntuacionTotal(self):
+        return self.puntuacion_total
+    
+    def getNivelesCompletados(self):
+        return self.niveles_completados
+    
+        
 class Nivel:
     def __init__(self, grid, id):
         self.grid = grid
