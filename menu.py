@@ -209,7 +209,7 @@ class MenuCargarNivel():
                             board[i].append(celda)
 
                 nombre = archivo.replace(".json", "")
-                self.levels.append([nombre, Nivel(grid_data), board])
+                self.levels.append([nombre, Nivel(grid_data, "test"), board])
 
         for i, level in enumerate(self.levels):
             boton = Boton(level[0], (250, 100 + i * 60), (200, 50), self.font, lambda n=level: self.iniciar_partida(n))
