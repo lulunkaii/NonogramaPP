@@ -119,7 +119,7 @@ class Tablero:
         pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, self.bar_height, self.edge_size*self.cell_size, (self.edge_size + self.grid_size)*self.cell_size))
         for row in range(self.grid_size):
             row_seq = self.secuencias_fila[row]
-            for i, num in enumerate(reversed(row_seq)):
+            for i, num in enumerate(row_seq):
                 texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
                 if num[0] == 1:
                     texto = self.font.render(str(num[1]), True, colorCelda.BLACK.value)
@@ -285,7 +285,7 @@ class Partida:
                 # Verificar si el nivel está completado después de procesar el clic
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
-                    self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0)
+                    self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                     if self.url:
                         url = os.path.join("./saved_levels", self.url)
                         try:
@@ -312,7 +312,7 @@ class Partida:
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar(self.board):
                 self.mostrar_mensaje("¡Nivel completado!")
-                self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0)
+                self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                 if self.url:
                     url = os.path.join("./saved_levels", self.url)
                     try:
@@ -388,8 +388,11 @@ class Estadisticas:
         self.niveles_superados += niveles
         self.puntuacion_total += puntuacion
         if nivel_completado:
-            self.niveles_completados.append(nivel_completado)
-        
+            if nivel_completado.endswith(".txt"):
+                nivel_completado = nivel_completado[:-4]
+            if nivel_completado not in self.niveles_completados:
+                self.niveles_completados.append(nivel_completado)
+    
         self.__guardarEstadisticas__()
 
     def verificarArchivo(self):
