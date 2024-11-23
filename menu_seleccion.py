@@ -58,7 +58,7 @@ class MenuSeleccionNivel(Menu):
                     if(len(fila) != 0):
                         matriz.append(fila)
                         
-                self.niveles.append(Nivel(matriz, "test"))
+                self.niveles.append(Nivel(matriz, archivo))
 
         # Crear botones para los niveles
         
