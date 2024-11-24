@@ -119,7 +119,7 @@ class Tablero:
         pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, self.bar_height, self.edge_size*self.cell_size, (self.edge_size + self.grid_size)*self.cell_size))
         for row in range(self.grid_size):
             row_seq = self.secuencias_fila[row]
-            for i, num in enumerate(reversed(row_seq)):
+            for i, num in enumerate(row_seq):
                 texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
                 if num[0] == 1:
                     texto = self.font.render(str(num[1]), True, colorCelda.BLACK.value)
@@ -202,6 +202,9 @@ class Partida:
         self.save_button = Boton("Guardar y salir", (5 * (self.window_width // 9), self.bar_height/5), (3* (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.guardar)
         self.exit_button = Boton("Salir", (self.window_width // 9, self.bar_height/5), (3 * (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.salir)
         self.buttons = [self.save_button, self.exit_button]
+        self.tiempo_inicio = None
+        self.estadisticas = Estadisticas()
+        self.estadisticas.cargarEstadisticas()
 
     def mostrar_mensaje(self, mensaje):
         texto = self.font.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
@@ -282,6 +285,7 @@ class Partida:
                 # Verificar si el nivel está completado después de procesar el clic
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
+                    self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                     if self.url:
                         url = os.path.join("./saved_levels", self.url)
                         try:
@@ -308,6 +312,7 @@ class Partida:
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar(self.board):
                 self.mostrar_mensaje("¡Nivel completado!")
+                self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                 if self.url:
                     url = os.path.join("./saved_levels", self.url)
                     try:
@@ -351,6 +356,7 @@ class Partida:
         self.menu.volver_al_menu()
 
     def run(self):
+        self.tiempo_inicio = pygame.time.get_ticks()
         self.running = True
         while self.running:
             self.clock.tick(1000)
@@ -361,21 +367,111 @@ class Partida:
             pygame.display.flip()
 
         pygame.quit()
+    
+    def get_tiempo_partida(self):
+        if self.tiempo_inicio is not None:
+            elapsed_time_ms = pygame.time.get_ticks() - self.tiempo_inicio
+            return elapsed_time_ms // 1000  # Convertir a segundos
+        return 0
 
 class Estadisticas:
-    def __init__(self):
-        self.horas_jugadas = 0
+    def __init__(self, id=1):
+        self.id = id
+        self.segundos_jugados = 0
         self.niveles_superados = 0
         self.puntuacion_total = 0
+        self.niveles_completados = []
+        self.verificarArchivo()
 
-    def actualizar(self, horas, niveles, puntuacion):
-        self.horas_jugadas += horas
+    def actualizar(self, minutos, niveles, puntuacion, nivel_completado=None):
+        self.segundos_jugados += minutos
         self.niveles_superados += niveles
         self.puntuacion_total += puntuacion
+        if nivel_completado:
+            if nivel_completado.endswith(".txt"):
+                nivel_completado = nivel_completado[:-4]
+            if nivel_completado not in self.niveles_completados:
+                self.niveles_completados.append(nivel_completado)
+    
+        self.__guardarEstadisticas__()
 
+    def verificarArchivo(self):
+        try:
+            open("data/estadisticas.json", "r")
+        except FileNotFoundError: 
+            with open("data/estadisticas.json", "w") as file:
+                nuevas_estadisticas = [
+                    {
+                        "id": 1,
+                        "nombre": "Usuario 1",
+                        "segundos_jugados": 0,
+                        "niveles_superados": 0,
+                        "puntuacion_total": 0,
+                        "niveles_completados": []
+                    }
+                ]
+                json.dump(nuevas_estadisticas, file, indent=4)
+        
+    def cargarEstadisticas(self):
+        estadisticas = {}
+
+        try:
+            with open("data/estadisticas.json", "r") as file:
+                estadisticas = json.load(file)
+        except FileNotFoundError:
+            print("No se encontró el archivo de estadísticas.")
+            return
+        except json.JSONDecodeError:
+            print("Error al cargar el archivo de estadísticas.")
+            return
+
+        for user in estadisticas:
+            if user["id"] == self.id:
+                self.segundos_jugados = user["segundos_jugados"]
+                self.niveles_superados = user["niveles_superados"]
+                self.puntuacion_total = user["puntuacion_total"]
+                self.niveles_completados = user["niveles_completados"]
+                break
+        
+    def __guardarEstadisticas__(self):
+        try:
+            with open("data/estadisticas.json", "r") as file:
+                estadisticas = json.load(file)
+        except:
+            print("Error al cargar el archivo de estadísticas.")
+            return
+        
+        for user in estadisticas:
+           if user["id"] == self.id:
+                user["segundos_jugados"] = self.segundos_jugados
+                user["niveles_superados"] = self.niveles_superados
+                user["puntuacion_total"] = self.puntuacion_total
+                user["niveles_completados"] = self.niveles_completados
+                break
+        try:   
+            with open("data/estadisticas.json", "w") as file:
+                json.dump(estadisticas, file, indent=4)
+        except:
+            print("Error al guardar las estadísticas.")
+            return
+        
+    def getSegundosJugados(self):
+        return self.segundos_jugados
+    
+    def getNivelesSuperados(self):
+        return self.niveles_superados
+    
+    def getPuntuacionTotal(self):
+        return self.puntuacion_total
+    
+    def getNivelesCompletados(self):
+        return self.niveles_completados
+    
+        
 class Nivel:
-    def __init__(self, grid):
+    def __init__(self, grid, id):
         self.grid = grid
+        self.id = id
         self.colores = [colorCelda.DEFAULT, colorCelda.BLACK, colorCelda.BLUE, colorCelda.GREEN, colorCelda.RED]
         self.completado = False
 
@@ -407,3 +503,7 @@ class Nivel:
 class Gamemode:
     def __init__(self):
         pass
+
+if __name__ == "__main__":
+    estadisticas = Estadisticas()
+    estadisticas.verificarArchivo()

@@ -1,5 +1,5 @@
 import pygame, os, json
-from mecanicas import Partida, Nivel, Celda
+from mecanicas import Partida, Nivel, Celda, Estadisticas
 from utils import SettingsManager, colorCelda, Boton
 import menu_seleccion
 
@@ -114,7 +114,10 @@ class Menu:
 
     def ver_estadisticas(self):
         self.cerrar_menu()
-        pass
+        estadisticas = Estadisticas()
+        estadisticas.cargarEstadisticas()
+        menu_estadisticas = MenuEstadisticas(self, estadisticas)
+        menu_estadisticas.iniciar_menu_estadisticas()
 
     def cargar_partida(self):
         self.cerrar_menu()
@@ -209,7 +212,7 @@ class MenuCargarNivel():
                             board[i].append(celda)
 
                 nombre = archivo.replace(".json", "")
-                self.levels.append([nombre, Nivel(grid_data), board])
+                self.levels.append([nombre, Nivel(grid_data, "test"), board])
 
         for i, level in enumerate(self.levels):
             boton = Boton(level[0], (250, 100 + i * 60), (200, 50), self.font, lambda n=level: self.iniciar_partida(n))
@@ -342,6 +345,78 @@ class MenuCrearNivel(Menu):
         self.menu_principal.jugar_nivel_creado()
 
     def volver_al_menu_principal(self):
+        self.running = False
+        self.menu_principal.iniciar_menu()
+
+class MenuEstadisticas:
+    def __init__(self, menu_principal, estadisticas):
+        self.menu_principal = menu_principal
+        self.estadisticas = estadisticas
+        self.running = False
+        self.window = None
+        self.font = None
+        self.boton_volver = None
+
+    def iniciar_pygame(self):
+        pygame.init()
+        self.window = pygame.display.set_mode((500, 600))
+        self.font = pygame.font.SysFont("Trebuchet MS", 20)
+        self.boton_volver = Boton("Volver al Menú", (150, 500), (200, 50), self.font, self.volver_al_menu)
+
+    def dibujar_estadisticas(self):
+        self.window.fill((0, 0, 0))  # Fondo negro
+
+        texto_titulo = self.font.render("Estadísticas", True, (255, 255, 255))
+        self.window.blit(texto_titulo, (150, 50))
+
+        lista_niveles_completados = []
+
+        for nivel in self.estadisticas.getNivelesCompletados():
+            if nivel.startswith("level"):
+                try:
+                    numero_nivel = int(nivel[5:])
+                    lista_niveles_completados.append(numero_nivel)
+                except:
+                    lista_niveles_completados.append(nivel)
+            else:
+                lista_niveles_completados.append(nivel)
+        
+        # Mostrar estadísticas
+        stats = [
+            f"Segundos Jugados: {self.estadisticas.getSegundosJugados()}",
+            f"Niveles Superados: {self.estadisticas.getNivelesSuperados()}",
+            f"Puntuación Total: {self.estadisticas.getPuntuacionTotal()}",
+            f"Niveles Completados: {lista_niveles_completados}",
+        ]
+
+        for i, stat in enumerate(stats):
+            texto = self.font.render(stat, True, (255, 255, 255))
+            self.window.blit(texto, (50, 150 + i * 40))  # Espaciado entre líneas
+
+        # Dibujar botón
+        self.boton_volver.draw(self.window)
+
+        pygame.display.flip()
+
+    def iniciar_menu_estadisticas(self):
+        self.iniciar_pygame()
+        self.running = True
+
+        while self.running:
+            self.dibujar_estadisticas()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    self.boton_volver.action()
+                self.boton_volver.handle_event(event)
+
+            pygame.time.Clock().tick(30)
+
+        pygame.quit()
+
+    def volver_al_menu(self):
         self.running = False
         self.menu_principal.iniciar_menu()
 
