@@ -1,4 +1,4 @@
-import pygame, math, json, os
+import pygame, math, json, os, random
 from utils import SettingsManager, colorCelda, Boton
 
 class Celda:
@@ -197,8 +197,8 @@ class Partida:
         self.clock = pygame.time.Clock()
         self.menu = menu  # Referencia al menú
         self.running = False
-        self.font = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
-        self.button_font = pygame.font.SysFont(None, self.window_height // 100)
+        self.font = None
+        self.button_font = pygame.font.SysFont(None, self.window_height // 20)
         self.save_button = Boton("Guardar y salir", (5 * (self.window_width // 9), self.bar_height/5), (3* (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.guardar)
         self.exit_button = Boton("Salir", (self.window_width // 9, self.bar_height/5), (3 * (self.window_width // 9), 3 * self.bar_height/5), self.button_font, self.salir)
         self.buttons = [self.save_button, self.exit_button]
@@ -207,21 +207,52 @@ class Partida:
         self.estadisticas.cargarEstadisticas()
 
     def mostrar_mensaje(self, mensaje):
+       #Calcular la dimension del mensaje con respecto al tamaño de la
+        font_size = min(self.window_width, self.window_height) // 10  # Adjust this divisor as needed
+        self.font = pygame.font.SysFont(None,font_size)
+
         texto = self.font.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
         rect = texto.get_rect(center=(self.window_width // 2, self.window_height // 2))
 
         # Dibujar un rectángulo blanco detrás del texto
-        padding = 20  # Espacio adicional alrededor del texto
+        padding = font_size // 2  # Adjust padding based on font size
         background_rect = pygame.Rect(
             rect.left - padding,
             rect.top - padding,
             rect.width + 2 * padding,
             rect.height + 2 * padding
         )
-        pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
 
-        self.window.blit(texto, rect)
-        pygame.display.flip()
+        # Crear una superficie transparente para el texto
+        text_surface = pygame.Surface((rect.width + 2 * padding, rect.height + 2 * padding), pygame.SRCALPHA)
+        text_surface.fill((255, 255, 255, 0))  # Fondo transparente
+
+        # Crear confetti
+        confetti_particles = [Confetti(random.randint(0, self.window_width), random.randint(0, self.window_height)) for _ in range(100)]
+
+        # Animar la aparición del texto y el confetti
+        for alpha in range(0, 256, 5):
+            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.draw()
+
+            # Dibujar el rectángulo de fondo
+            pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
+
+            # Renderizar el texto con la opacidad actual
+            text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
+            text_surface.blit(texto, (padding, padding))
+            text_surface.set_alpha(alpha)
+
+            # Dibujar confetti
+            for confetti in confetti_particles:
+                confetti.update()
+                confetti.draw(self.window)
+
+            # Blit la superficie del texto en la ventana principal
+            self.window.blit(text_surface, (rect.left - padding, rect.top - padding))
+            pygame.display.flip()
+            pygame.time.wait(30)  # Espera un poco para crear el efecto de animación
+
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
     def pedir_mensaje(self, question):
@@ -503,6 +534,26 @@ class Nivel:
 class Gamemode:
     def __init__(self):
         pass
+
+class Confetti:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.size = random.randint(2, 5)
+        self.color = random.choice([
+            (255, 0, 0), (0, 255, 0), (0, 0, 255),
+            (255, 255, 0), (255, 0, 255), (0, 255, 255)
+        ])
+        self.speed_y = random.uniform(1, 3)
+        self.speed_x = random.uniform(-1, 1)
+
+    def update(self):
+        self.y += self.speed_y
+        self.x += self.speed_x
+
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.size)
+
 
 if __name__ == "__main__":
     estadisticas = Estadisticas()
