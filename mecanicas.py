@@ -1,4 +1,4 @@
-import pygame, math, json, os
+import pygame, math, json
 from utils import SettingsManager, Colores, Boton
 
 class Celda:
