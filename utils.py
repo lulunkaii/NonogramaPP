@@ -15,7 +15,7 @@ class SettingsManager(Enum):
     TITLE_BAR_COLOR = (100, 100, 100)
     SIZE_BARRA_SUPERIOR = 50
 
-class colorCelda(Enum):
+class Colores(Enum):
     DEFAULT = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)

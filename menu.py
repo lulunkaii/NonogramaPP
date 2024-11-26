@@ -1,6 +1,6 @@
 import pygame, os, json
 from mecanicas import Partida, Nivel, Celda, Estadisticas
-from utils import SettingsManager, colorCelda, Boton
+from utils import SettingsManager, Colores, Boton
 import menu_seleccion
 
 # Carga de sonidos
@@ -192,23 +192,23 @@ class MenuCargarNivel():
                     for celda in row:
                         if celda == [255, 255, 255]:
                             celda = Celda()
-                            celda.click(colorCelda.DEFAULT)
+                            celda.click(Colores.DEFAULT)
                             board[i].append(celda)
                         elif celda == [0, 0, 0]:
                             celda = Celda()
-                            celda.click(colorCelda.BLACK)
+                            celda.click(Colores.BLACK)
                             board[i].append(celda)
                         elif celda == [255, 0 , 0]:
                             celda = Celda()
-                            celda.click(colorCelda.RED)
+                            celda.click(Colores.RED)
                             board[i].append(celda)
                         elif celda == [0, 255, 0]:
                             celda = Celda()
-                            celda.click(colorCelda.GREEN)
+                            celda.click(Colores.GREEN)
                             board[i].append(celda)
                         elif celda == [0, 0, 255]:
                             celda = Celda()
-                            celda.click(colorCelda.BLUE)
+                            celda.click(Colores.BLUE)
                             board[i].append(celda)
 
                 nombre = archivo.replace(".json", "")
@@ -276,7 +276,7 @@ class CrearNivel(Partida):
         super().__init__(nivel, menu_principal)
         self.window_height = 500  # Aumentar la altura de la ventana
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
-        self.boton_guardar = Boton("Guardar Nivel", (self.window_width // 2 - 100, self.window_height - 60), (240, 50), self.font, self.guardar_nivel)
+        self.boton_guardar = Boton("Guardar Nivel", (self.window_width // 2 - 100, self.window_height - 60), (240, 50), self.fuente, self.guardar_nivel)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -303,7 +303,7 @@ class CrearNivel(Partida):
 
     def guardar_nivel(self):
         nombre_nivel = input("Ingrese el nombre del nuevo nivel: ")
-        matriz = [[1 if celda.get_color() != colorCelda.DEFAULT else 0 for celda in fila] for fila in self.board.get_board()]
+        matriz = [[1 if celda.get_color() != Colores.DEFAULT else 0 for celda in fila] for fila in self.board.get_board()]
         with open(f'./levels/{nombre_nivel}.txt', 'w') as file:
             for fila in matriz:
                 file.write(''.join(map(str, fila)) + '\n')
