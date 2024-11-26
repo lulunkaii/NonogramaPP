@@ -311,8 +311,14 @@ class Partida:
                 # Redibujar el tablero después del clic
                 self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
                 self.draw()
-                pygame.display.flip()                               
-               
+                pygame.display.flip()
+
+            for button in self.buttons:
+                button.handle_event(event)    
+         
+        if pygame.mouse.get_pressed()[0]:
+                self.board.handle_click(pygame.mouse.get_pos(),True)                                                    
+              
                 # Verificar si el nivel está completado después de procesar el clic
                 if self.nivel.verificar(self.board):
                     self.mostrar_mensaje("¡Nivel completado!")
@@ -325,34 +331,7 @@ class Partida:
                             print(f"Archivo {url} no existe.")
                         except Exception as e:
                             print(f"Ocurrio un error al tratar de eliminar el archivo {url}: {e} ")
-
                     self.salir()
-            
-            for button in self.buttons:
-                button.handle_event(event)
-            
-
-        if pygame.mouse.get_pressed()[0]:
-            self.board.handle_click(pygame.mouse.get_pos(),True)
-
-            # Redibujar el tablero después del clic
-            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-            self.draw()
-            pygame.display.flip()                               
-               
-            # Verificar si el nivel está completado después de procesar el clic
-            if self.nivel.verificar(self.board):
-                self.mostrar_mensaje("¡Nivel completado!")
-                self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
-                if self.url:
-                    url = os.path.join("./saved_levels", self.url)
-                    try:
-                        os.remove(url)
-                    except FileNotFoundError:
-                        print(f"Archivo {url} no existe.")
-                    except Exception as e:
-                        print(f"Ocurrio un error al tratar de eliminar el archivo {url}: {e} ")
-                self.salir()
 
     def guardar(self):
         filename = "saved_levels/"
