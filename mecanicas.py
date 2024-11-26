@@ -3,11 +3,11 @@ from utils import SettingsManager, Colores, Boton
 
 class Celda:
     def __init__(self):
-        self.color = Colores.DEFAULT
+        self.color = Colores.DEFAULT.value
 
     def click(self, color):
         if(color == self.color):
-            self.color = Colores.DEFAULT
+            self.color = Colores.DEFAULT.value
         else:    
             self.color = color
 
@@ -21,30 +21,66 @@ class Tablero:
         self.cell_size = SettingsManager.CELL_SIZE.value
         self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
         self.font = pygame.font.SysFont(None, 24)
+
+        # Variables para manejar el click
         self.celda_anterior = 0 
         self.color_arrastre = 0
-        self.color_seleccionado = Colores.BLACK
-
+        self.color_seleccionado = Colores.BLACK.value
+        
     def verificar(self):
-        return self.matriz_objetivo == self.tablero 
-                
+        for row in range(len(self.tablero)):
+            for col in range(len(self.tablero[row])):
+                color = self.tablero[row][col].get_color()
+                if color == Colores.DEFAULT.value and self.matriz_objetivo[row][col] != 0:
+                    return False
+                if color == Colores.BLACK.value and self.matriz_objetivo[row][col] != 1:
+                    return False
+                if color == Colores.RED.value and self.matriz_objetivo[row][col] != 2:
+                    return False
+                if color == Colores.GREEN.value and self.matriz_objetivo[row][col] != 3:
+                    return False
+                if color == Colores.BLUE.value and self.matriz_objetivo[row][col] != 4:
+                    return False
+        self.completado = True
+        return True 
+                  
     def draw(self, surface, edge_size, altura_barra_superior):
         # Dibujar la cuadricula
         for row, rowOfCells in enumerate(self.tablero):
             for col, cell in enumerate(rowOfCells):
-                color = cell.get_color().value
+                color = cell.get_color()
                 pygame.draw.rect(surface, color, (
                     (col + edge_size) * self.cell_size + 1,
                     (row + edge_size) * self.cell_size + altura_barra_superior + 1, self.cell_size - 2, self.cell_size - 2))
+    
+    def handle_click(self, pos, size_borde, presionando=False):
+        size_tablero = len(self.tablero)
+        cell_size = SettingsManager.CELL_SIZE.value
+
+        row = (pos[1] - (size_borde * cell_size) - SettingsManager.SIZE_BARRA_SUPERIOR.value ) // cell_size
+        col = (pos[0] - size_borde * cell_size) // cell_size
+        if 0 <= row < size_tablero and 0 <= col < size_tablero:
+            if self.celda_anterior != self.tablero[row][col] and presionando:
+                if self.tablero[row][col].get_color() != self.color_arrastre: 
+                    self.tablero[row][col].click(self.color_seleccionado)                             
+            elif not presionando:
+                self.tablero[row][col].click(self.color_seleccionado)
+                self.color_seleccionado = self.tablero[row][col].get_color()
+                self.color_arrastre = self.tablero[row][col].get_color()
+
+            self.celda_anterior = self.tablero[row][col]
         
+        for index, color in enumerate(Colores):
+            cx = (size_borde+0.5+index)*cell_size
+            cy = (size_tablero+size_borde+0.5)*cell_size + SettingsManager.SIZE_BARRA_SUPERIOR.value
+            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
+                self.color_seleccionado = color.value                
+   
     def get_size_matriz(self):
         return self.size_matriz
 
     def get_tablero(self):
         return self.tablero
-
-    def load_tablero(self, tablero):
-        self.tablero = tablero
 
 class Nivel:
     def __init__(self, matriz_objetivo, id):
@@ -116,21 +152,21 @@ class Nivel:
         size_matriz = self.tablero.get_size_matriz()
         # Pintar la barra superior
         pygame.draw.rect(surface, SettingsManager.TITLE_BAR_COLOR.value, (0, 0, (size_matriz + self.size_borde) * SettingsManager.CELL_SIZE.value, self.altura_barra_superior))
-        
+        font = pygame.font.SysFont("Trebuchet MS", 20)        
         # Dibujar el marco superior
         pygame.draw.rect(surface, SettingsManager.GRID_BACKGROUND_COLOR.value, (0, self.altura_barra_superior, (self.size_borde + size_matriz) * SettingsManager.CELL_SIZE.value, self.size_borde * SettingsManager.CELL_SIZE.value))
         for col in range(size_matriz):
             col_seq = self.secuencias_columna[col]
             for i, num in enumerate(col_seq):
-                texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
+                texto = font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
                 if num[0] == 1:
-                    texto = self.font.render(str(num[1]), True, Colores.BLACK.value)
+                    texto = font.render(str(num[1]), True, Colores.BLACK.value)
                 elif num[0] == 2:
-                    texto = self.font.render(str(num[1]), True, Colores.RED.value)
+                    texto = font.render(str(num[1]), True, Colores.RED.value)
                 elif num[0] == 3:
-                    texto = self.font.render(str(num[1]), True, Colores.GREEN.value)
+                    texto = font.render(str(num[1]), True, Colores.GREEN.value)
                 elif num[0] == 4:
-                    texto = self.font.render(str(num[1]), True, Colores.BLUE.value)
+                    texto = font.render(str(num[1]), True, Colores.BLUE.value)
 
                 text_rect = texto.get_rect(center=((col + self.size_borde) * SettingsManager.CELL_SIZE.value + SettingsManager.CELL_SIZE.value // 2,
                                                    (self.size_borde - len(col_seq) + i) * SettingsManager.CELL_SIZE.value + SettingsManager.CELL_SIZE.value // 2 + self.altura_barra_superior))
@@ -141,15 +177,15 @@ class Nivel:
         for row in range(size_matriz):
             row_seq = self.secuencias_fila[row]
             for i, num in enumerate(row_seq):
-                texto = self.font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
+                texto = font.render(str(num[1]), True, SettingsManager.TEXT_COLOR.value)
                 if num[0] == 1:
-                    texto = self.font.render(str(num[1]), True, Colores.BLACK.value)
+                    texto = font.render(str(num[1]), True, Colores.BLACK.value)
                 elif num[0] == 2:
-                    texto = self.font.render(str(num[1]), True, Colores.RED.value)
+                    texto = font.render(str(num[1]), True, Colores.RED.value)
                 elif num[0] == 3:
-                    texto = self.font.render(str(num[1]), True, Colores.GREEN.value)
+                    texto = font.render(str(num[1]), True, Colores.GREEN.value)
                 elif num[0] == 4:
-                    texto = self.font.render(str(num[1]), True, Colores.BLUE.value)
+                    texto = font.render(str(num[1]), True, Colores.BLUE.value)
                 
                 text_rect = texto.get_rect(center=((self.size_borde - len(row_seq) + i) * SettingsManager.CELL_SIZE.value + SettingsManager.CELL_SIZE.value // 2,
                                                    (row + self.size_borde) * SettingsManager.CELL_SIZE.value + SettingsManager.CELL_SIZE.value // 2 + self.altura_barra_superior))
@@ -158,9 +194,9 @@ class Nivel:
         # Dibujar la esquina superior izquierda (previsualizacion)
         pygame.draw.rect(surface, Colores.DEFAULT.value, (0, self.altura_barra_superior, self.size_borde*SettingsManager.CELL_SIZE.value, self.size_borde*SettingsManager.CELL_SIZE.value))
         mini_cell_size = (SettingsManager.CELL_SIZE.value * self.size_borde) // size_matriz
-        for i, fila in enumerate(self.tablero):
+        for i, fila in enumerate(self.tablero.get_tablero()):
             for j, celda in enumerate(fila):
-                color = celda.get_color().value
+                color = celda.get_color()
                 rect = pygame.Rect(j * mini_cell_size, i * mini_cell_size + self.altura_barra_superior, mini_cell_size, mini_cell_size)
                 pygame.draw.rect(surface, color, rect)
 
@@ -169,47 +205,31 @@ class Nivel:
         for index, color in enumerate(Colores):
             pygame.draw.circle(surface, color.value, ((self.size_borde+0.5+index)*SettingsManager.CELL_SIZE.value , (size_matriz+self.size_borde+0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior), 10)
 
-        self.tablero.draw(surface, self.size_borde, self.altura_barra_superior)
-        
-    def handle_click(self, pos, presionando=False):
-        size_tablero = self.tablero.get_size_matriz()
-        cell_size = SettingsManager.CELL_SIZE.value
-        
-        row = (pos[1] - (self.size_borde * cell_size) - self.altura_barra_superior ) // cell_size
-        col = (pos[0] - self.size_borde * cell_size) // cell_size
-        if 0 <= row < size_tablero and 0 <= col < size_tablero:
-            if self.celda_anterior != self.tablero[row][col] and presionando:
-                if self.tablero[row][col].get_color().value != self.color_arrastre: 
-                    self.tablero[row][col].click(self.color_seleccionado)                             
-            elif not presionando:
-                self.tablero[row][col].click(self.color_seleccionado)
-                self.color_seleccionado = self.tablero[row][col].get_color()
-                self.color_arrastre = self.tablero[row][col].get_color().value
-
-            self.celda_anterior = self.tablero[row][col]
-        
-        for index, color in enumerate(Colores):
-            cx = (self.size_borde+0.5+index)*cell_size
-            cy = (size_tablero+self.size_borde+0.5)*cell_size + self.altura_barra_superior
-            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
-                self.color_seleccionado = color
-    
+        self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
+                            
     def verificar(self):
         return self.tablero.verificar()
-    
-    def get_matriz_objetivo(self):
-        return self.matriz_objetivo
-    
+        
     def get_size_borde(self):
         return self.size_borde
-        
+            
+    def handle_click(self, pos, presionando=False):
+        self.tablero.handle_click(pos, self.size_borde, presionando)
+    
+    def get_id(self):
+        return self.id
+    
+    def get_size_matriz(self):
+        return len(self.matriz_objetivo[0])
+    
     def isCompleted(self):
         return self.completado
     
+    
 class Partida:
-    def __init__(self, menu, matriz_objetivo, id_nivel):
-        self.nivel = Nivel(matriz_objetivo, id_nivel)
-        size_tablero = len(matriz_objetivo[0])
+    def __init__(self, menu, nivel):
+        self.nivel = nivel
+        size_tablero = nivel.get_size_matriz()
         
         #Referencia a menu 
         self.menu = menu
@@ -250,52 +270,6 @@ class Partida:
         self.window.blit(texto, rect)
         pygame.display.flip()
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
-
-    def pedir_mensaje(self, question):
-        font = pygame.font.SysFont(None, 30)
-        input_box = pygame.Rect((self.ancho_ventana - 140)/2, (self.altura_ventana - 32)/2 + 50, 140, 32)
-        color_inactive = pygame.Color('lightskyblue3')
-        color_active = pygame.Color('dodgerblue2')
-        color = color_inactive
-        active = False
-        text = ''
-        done = False
-
-        while not done:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    done = True
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    # Si el usuario hace clic en el cuadro de entrada
-                    if input_box.collidepoint(event.pos):
-                        active = not active
-                    else:
-                        active = False
-                    color = color_active if active else color_inactive
-                if event.type == pygame.KEYDOWN:
-                    if active:
-                        if event.key == pygame.K_RETURN:
-                            done = True
-                        elif event.key == pygame.K_BACKSPACE:
-                            text = text[:-1]
-                        else:
-                            text += event.unicode
-
-            pygame.draw.rect(self.window, (0,0,0), ((self.ancho_ventana - 140)//2 - 40, (self.altura_ventana - 32)//2 + 10, 320, 112))
-            # Renderizar el texto de la pregunta
-            question_surface = font.render(question, True, pygame.Color('white'))
-            self.window.blit(question_surface, (input_box.x - 30, input_box.y - 30))
-            # Renderizar el texto del usuario
-            txt_surface = font.render(text, True, color)
-            width = max(200, txt_surface.get_width() + 10)
-            input_box.w = width
-            self.window.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
-            pygame.draw.rect(self.window, color, input_box, 2)
-
-            pygame.display.flip()
-
-        return text
-
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -452,7 +426,3 @@ class Estadisticas:
     
     def getNivelesCompletados(self):
         return self.niveles_completados
-
-class Gamemode:
-    def __init__(self):
-        pass
