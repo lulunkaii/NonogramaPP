@@ -41,7 +41,6 @@ class Tablero:
                     return False
                 if color == Colores.BLUE.value and self.matriz_objetivo[row][col] != 4:
                     return False
-        self.completado = True
         return True 
                   
     def draw(self, surface, edge_size, altura_barra_superior):
@@ -426,3 +425,104 @@ class Estadisticas:
     
     def getNivelesCompletados(self):
         return self.niveles_completados
+
+class CrearNivel:
+    def __init__(self, menu_principal, nivel):
+        self.menu = menu_principal
+        self.nivel = nivel
+        self.altura_ventana = 600
+        self.ancho_ventana = 500
+        self.window = pygame.display.set_mode((self.ancho_ventana, self.altura_ventana))
+        pygame.display.set_caption("Crear Nivel")
+        self.clock = pygame.time.Clock()
+        self.running = False
+        self.fuente = pygame.font.SysFont("Trebuchet MS", 20)
+        self.boton_guardar = Boton("Guardar Nivel", (self.ancho_ventana // 2 - 100, self.altura_ventana - 60), (240, 50), self.fuente, self.guardar_nivel)
+        self.colores = [Colores.DEFAULT, Colores.BLACK, Colores.RED, Colores.GREEN, Colores.BLUE]
+        self.rect_colores = [pygame.Rect(50 + i * 60, self.altura_ventana - 100, 50, 50) for i in range(len(Colores)) ]
+        self.color_seleccionado = Colores.DEFAULT
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    # Verificar si se selecciona un color
+                    for i, rect in enumerate(self.rect_colores):
+                        if rect.collidepoint(event.pos):
+                            self.color_seleccionado = self.colores[i]
+
+                    # Interacción con el tablero
+                    self.nivel.handle_click(event.pos, self.color_seleccionado)
+
+                # Verificar interacción con el botón
+                self.boton_guardar.handle_event(event)
+    
+    def dibujar(self):
+        # Fondo
+        self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+
+        # Dibujar el tablero
+        self.nivel.draw(self.window)
+
+        # Dibujar el botón
+        self.boton_guardar.draw(self.window)
+
+        # Dibujar las opciones de colores
+        for i, rect in enumerate(self.rect_colores):
+            pygame.draw.rect(self.window, self.colores[i].value, rect)
+            if self.colores[i] == self.color_seleccionado:
+                pygame.draw.rect(self.window, (255, 255, 255), rect, 2)
+
+        # Actualizar la pantalla
+        pygame.display.flip()
+
+    def run(self):
+        self.running = True
+        while self.running:
+            self.clock.tick(60)
+            self.handle_events()
+
+            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.nivel.draw(self.window)
+            self.boton_guardar.draw(self.window)
+            pygame.display.flip()
+        pygame.quit()
+
+    def guardar_nivel(self):
+        tablero = self.nivel.tablero.get_tablero()
+        matriz = []
+        for fila in tablero:
+            nueva_fila = []
+            for celda in fila:
+                if celda.get_color() == Colores.DEFAULT.value:
+                    nueva_fila.append(0)
+                elif celda.get_color() == Colores.BLACK.value:
+                    nueva_fila.append(1)
+                elif celda.get_color() == Colores.RED.value:
+                    nueva_fila.append(2)
+                elif celda.get_color() == Colores.GREEN.value:
+                    nueva_fila.append(3)
+                elif celda.get_color() == Colores.BLUE.value:
+                    nueva_fila.append(4)
+            matriz.append(nueva_fila)
+        
+        with open('./levels/creados/levels.json') as file:
+            try:
+                data = list(json.load(file))
+            except:
+                data = []
+            nivel = {
+                "nombre": self.nivel.id,
+                "matriz": matriz
+            }
+            
+            data.append(nivel)
+            try:
+                with open('./levels/creados/levels.json', 'w') as file:
+                    json.dump(data, file)
+            except:
+                print("Error al guardar el nivel.")
+        self.running = False
+        self.menu.volver_al_menu()

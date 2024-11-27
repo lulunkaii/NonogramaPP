@@ -1,6 +1,6 @@
 import pygame, json
-from mecanicas import Partida, Nivel, Estadisticas
-from utils import SettingsManager, Colores, Boton, BotonSeleccionNivel
+from mecanicas import Partida, Nivel, Estadisticas, CrearNivel
+from utils import SettingsManager, Boton, BotonSeleccionNivel
 import ambiente as amb
 
 # Carga de sonidos
@@ -108,10 +108,6 @@ class Menu:
         menu_estadisticas = MenuEstadisticas(self, estadisticas)
         menu_estadisticas.iniciar_menu_estadisticas()
 
-    def cargar_partida(self):
-        self.cerrar_menu()
-        self.menu_cargar_partida.run_menu()
-
     def opciones(self):
         pass
 
@@ -124,11 +120,6 @@ class Menu:
     def crear_nivel(self):
         self.cerrar_menu()
         self.menu_crear_nivel.iniciar_menu()
-
-    def crear_nuevo_nivel(self):
-        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)])
-        self.partida_en_curso = CrearNivel(nivel_vacio, self)
-        self.partida_en_curso.run()
 
     def jugar_nivel_creado(self):
         # Implementar la lógica para jugar un nivel creado
@@ -250,46 +241,6 @@ class MenuSeleccionNivel(Menu):
         self.niveles = []
         self.botones_niveles = []
 
-class CrearNivel(Partida):
-    def __init__(self, nivel, menu_principal):
-        super().__init__(nivel, menu_principal)
-        self.window_height = 500  # Aumentar la altura de la ventana
-        self.window = pygame.display.set_mode((self.window_width, self.window_height))
-        self.boton_guardar = Boton("Guardar Nivel", (self.window_width // 2 - 100, self.window_height - 60), (240, 50), self.fuente, self.guardar_nivel)
-
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.board.handle_click(event.pos)
-                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.board.draw(self.window)
-                self.boton_guardar.draw(self.window)
-                pygame.display.flip()
-            self.boton_guardar.handle_event(event)
-
-    def run(self):
-        while self.running:
-            self.clock.tick(60)
-            self.handle_events()
-
-            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-            self.board.draw(self.window)
-            self.boton_guardar.draw(self.window)
-            pygame.display.flip()
-        pygame.quit()
-
-    def guardar_nivel(self):
-        nombre_nivel = input("Ingrese el nombre del nuevo nivel: ")
-        matriz = [[1 if celda.get_color() != Colores.DEFAULT else 0 for celda in fila] for fila in self.board.get_board()]
-        with open(f'./levels/{nombre_nivel}.txt', 'w') as file:
-            for fila in matriz:
-                file.write(''.join(map(str, fila)) + '\n')
-        print(f'Nivel guardado como {nombre_nivel}.txt')
-        self.running = False
-        self.menu.volver_al_menu()
-
 class MenuCrearNivel(Menu):
     def __init__(self, menu_principal):
         self.menu_principal = menu_principal
@@ -315,9 +266,61 @@ class MenuCrearNivel(Menu):
     def iniciar_menu(self):
         super().iniciar_menu()
 
+    def pedir_nombre_nivel(self):
+        input_box = pygame.Rect(60, 300, 400, 50)  
+        color_inactivo = (100, 100, 100)
+        color_activo = (0, 120, 215)
+        color_caja = color_inactivo
+        activo = False
+        texto = ""
+        font = pygame.font.Font(None, 32)
+
+        pedir_nombre = True
+        while pedir_nombre:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif evento.type == pygame.MOUSEBUTTONDOWN:
+                    # Activar/desactivar caja de entrada
+                    if input_box.collidepoint(evento.pos):
+                        activo = not activo
+                    else:
+                        activo = False
+                    color_caja = color_activo if activo else color_inactivo
+                elif evento.type == pygame.KEYDOWN and activo:
+                    if evento.key == pygame.K_RETURN:
+                        # Retornar texto ingresado al presionar Enter
+                        return texto
+                    elif evento.key == pygame.K_BACKSPACE:
+                        # Borrar último carácter
+                        texto = texto[:-1]
+                    else:
+                        # Añadir carácter
+                        texto += evento.unicode
+
+            # Dibujar la ventana
+            self.window.blit(self.menu_principal.fondo_imagen, (0, 0))
+
+            # Dibujar instrucciones
+            instrucciones = font.render("Ingresa el nombre del nivel y presiona Enter:", True, (255, 255, 255))
+            self.window.blit(instrucciones, (25 , 250))
+
+            # Dibujar la caja de entrada
+            pygame.draw.rect(self.window, color_caja, input_box, 2)
+
+            # Dibujar texto en la caja
+            texto_renderizado = font.render(texto, True, (255, 255, 255))
+            self.window.blit(texto_renderizado, (input_box.x + 5, input_box.y + 10))
+
+            # Actualizar la pantalla
+            pygame.display.flip()
+            
     def crear_nuevo_nivel(self):
-        self.running = False
-        self.menu_principal.crear_nuevo_nivel()
+        nombre_nivel = self.pedir_nombre_nivel()
+        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel)
+        self.partida_en_curso = CrearNivel(self, nivel_vacio)
+        self.partida_en_curso.run()
 
     def jugar_nivel_creado(self):
         self.running = False
