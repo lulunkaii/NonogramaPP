@@ -9,7 +9,20 @@ sonido_seleccion = pygame.mixer.Sound("resources/sounds/seleccion.wav")
 sonido_presion = pygame.mixer.Sound("resources/sounds/presion.wav")
 
 class Menu:
+    """
+    Clase base para los menús del juego.
+    
+    Attributes:
+        partida_en_curso (Partida): Partida en curso.
+        menu_seleccion_nivel (MenuSeleccionNivel): Instancia del menú de selección de niveles.
+        menu_crear_nivel (MenuCrearNivel): Instancia del menú de creación de niveles.
+        estado (str): Estado actual del menú.
+        botones (list): Lista de botones para seleccionado.
+    """
     def __init__(self):
+        """
+        Inicializa las variables de la clase, carga la imagen de fondo y del titulo.
+        """
         self.running = False
         self.partida_en_curso = None
         self.menu_seleccion_nivel = MenuSeleccionNivel(self)  # Instancia del menú de selección de niveles
@@ -29,6 +42,9 @@ class Menu:
             self.frames_titulo.append(img)    
 
     def iniciar_pygame(self):
+        """
+        Inicializa Pygame y las variables necesarias como la ventana, el reloj, la fuente y los botones.
+        """
         pygame.init()
         self.window = pygame.display.set_mode((500, 600))
         self.clock = pygame.time.Clock()
@@ -43,15 +59,27 @@ class Menu:
         self.botones = [self.boton_jugar, self.boton_crear_nivel, self.boton_estadisticas, self.boton_opciones,self.boton_salir]
         
     def ir_a_seleccion_nivel(self):
+        """
+        Cierra el menú actual y abre el menú de selección de niveles.
+        """
         self.cerrar_menu()
         self.menu_seleccion_nivel.iniciar_menu()
 
     def iniciar_partida(self, nivel):
+        """
+        Inicia una partida con el nivel seleccionado.
+        
+        Args:
+            nivel (Nivel): Nivel seleccionado.
+        """
         partida = Partida(self, nivel)
         self.partida_en_curso = partida
         partida.run()
 
     def dibujar_menu(self):
+        """
+        Dibuja el menú en la ventana.
+        """
         self.window.blit(self.fondo_imagen, (0, 0))
 
         if self.estado == "menu_principal":
@@ -72,6 +100,9 @@ class Menu:
         pygame.display.flip()
 
     def iniciar_menu(self):
+        """
+        Inicia el menú principal.
+        """
         self.iniciar_pygame()
         self.clock.tick(144)
         self.running = True
@@ -102,6 +133,9 @@ class Menu:
         pygame.quit()
 
     def ver_estadisticas(self):
+        """
+        Cierra el menú actual, carga las estadísticas y abre el menú de estadísticas.
+        """
         self.cerrar_menu()
         estadisticas = Estadisticas()
         estadisticas.cargarEstadisticas()
@@ -112,21 +146,36 @@ class Menu:
         pass
 
     def salir(self):
+        """
+        Cierra el menú actual y finaliza el programa.
+        """
         self.cerrar_menu()
 
     def volver_al_menu(self):
+        """
+        Vuelve a este menú desde otro.
+        """
         self.iniciar_menu()
 
     def crear_nivel(self):
+        """
+        Cierra el menú actual y abre el menú de creación de niveles.
+        """
         self.cerrar_menu()
         self.menu_crear_nivel.iniciar_menu()
 
     def jugar_nivel_creado(self):
+        """
+        Cierra el menú actual y abre el menú de selección de niveles con los niveles creados.
+        """
         self.cerrar_menu()
         menu_seleccion_nivel = MenuSeleccionNivel(self, True)
         menu_seleccion_nivel.iniciar_menu()
 
     def cerrar_menu(self):
+        """
+        Cierra el menú actual.
+        """
         self.running = False
         self.botones = []
         self.boton_jugar = None
@@ -137,7 +186,21 @@ class Menu:
         self.boton_crear_nivel = None
 
 class MenuSeleccionNivel(Menu):
+    """
+    Clase para el menú de selección de niveles.
+    
+    Attributes:
+        menu_principal (Menu): Instancia del menú principal.
+        running (bool): Indica si el menú está en ejecución
+    """
     def __init__(self, menu_principal, niveles_creados=False):
+        """
+        Inicializa las variables de la clase.
+        
+        Args:
+            menu_principal (Menu): Instancia del menú principal.
+            niveles_creados (bool): Indica si se deben cargar los niveles creados.
+        """
         self.menu_principal = menu_principal
         self.running = False
         self.window = None
@@ -157,6 +220,9 @@ class MenuSeleccionNivel(Menu):
         self.ambiente_actual.cargar_musica()
 
     def iniciar_pygame(self):
+        """
+        Inicializa Pygame y las variables necesarias como la ventana, el reloj, la fuente y los botones. 
+        """
         pygame.init()
         self.window = pygame.display.set_mode((600, 600))
         self.clock = pygame.time.Clock()
@@ -183,6 +249,9 @@ class MenuSeleccionNivel(Menu):
         #self.boton_volver = Boton("Volver", (10, 380), (200, 50), self.font, self.volver_al_menu_principal)
     
     def dibujar_menu(self):
+        """
+        Dibuja el menú en la ventana.
+        """
         fondo = pygame.transform.scale(self.ambiente_actual.get_fondo(), (600, 600))
         self.window.blit(fondo, (0, 0))
         
@@ -193,6 +262,9 @@ class MenuSeleccionNivel(Menu):
         pygame.display.flip()
 
     def iniciar_menu(self):
+        """
+        Inicia el menú de selección de niveles.
+        """        
         self.iniciar_pygame()
         self.running = True
 
@@ -233,19 +305,37 @@ class MenuSeleccionNivel(Menu):
         pygame.quit()
 
     def iniciar_partida(self, nivel):
+        """
+        Inicia una partida con el nivel seleccionado.
+        
+        Args:
+            nivel (Nivel): Nivel seleccionado.
+        """
         self.cerrar_menu()
         self.menu_principal.iniciar_partida(nivel)
 
     def volver_al_menu_principal(self):
+        """
+        Vuelve al menú principal.
+        """
         self.cerrar_menu()
         self.menu_principal.iniciar_menu()
     
     def cerrar_menu(self):
+        """
+        Cierra el menú actual.
+        """
         self.running = False
         self.niveles = []
         self.botones_niveles = []
 
 class MenuCrearNivel(Menu):
+    """
+    Clase para el menú de creación de niveles.
+    
+    Attributes:
+        menu_principal (Menu): Instancia del menú principal.
+    """
     def __init__(self, menu_principal):
         self.menu_principal = menu_principal
         self.boton_crear_nuevo_nivel = None
@@ -255,12 +345,18 @@ class MenuCrearNivel(Menu):
         self.boton_seleccionado = 0
 
     def iniciar_pygame(self):
+        """
+        Inicializa Pygame y las variables necesarias como la ventana, el reloj, la fuente y los botones.
+        """
         super().iniciar_pygame()
         self.boton_crear_nuevo_nivel = Boton("Crear Nuevo Nivel", (150, 200), (200, 50), self.font, self.crear_nuevo_nivel)
         self.boton_jugar_nivel_creado = Boton("Jugar Nivel Creado", (150, 260), (200, 50), self.font, self.jugar_nivel_creado)
         self.botones = [self.boton_crear_nuevo_nivel, self.boton_jugar_nivel_creado]
 
     def dibujar_menu(self):
+        """
+        Dibuja el menú en la ventana.
+        """
         self.window.blit(self.menu_principal.fondo_imagen, (0, 0))
         for i, boton in enumerate(self.botones):
             boton.draw(self.window, seleccionado=i == self.boton_seleccionado)  
@@ -268,9 +364,18 @@ class MenuCrearNivel(Menu):
         
 
     def iniciar_menu(self):
+        """
+        Inicia el menú de creación de niveles.
+        """
         super().iniciar_menu()
 
     def pedir_nombre_nivel(self):
+        """
+        Pide al usuario el nombre del nivel que desea crear.
+        
+        Returns:
+            str: Nombre del nivel.
+        """
         input_box = pygame.Rect(60, 300, 400, 50)  
         color_inactivo = (100, 100, 100)
         color_activo = (0, 120, 215)
@@ -321,21 +426,44 @@ class MenuCrearNivel(Menu):
             pygame.display.flip()
             
     def crear_nuevo_nivel(self):
+        """
+        Crea un nuevo nivel vacío y abre el apartado de creación de niveles.
+        """
         nombre_nivel = self.pedir_nombre_nivel()
         nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel)
         self.partida_en_curso = CrearNivel(self, nivel_vacio)
         self.partida_en_curso.run()
 
     def jugar_nivel_creado(self):
+        """
+        Cierra el menú actual y abre el menú de selección de niveles con los niveles creados.
+        """
         self.running = False
         self.menu_principal.jugar_nivel_creado()
 
     def volver_al_menu_principal(self):
+        """
+        Vuelve al menú principal.
+        """
         self.running = False
         self.menu_principal.iniciar_menu()
 
 class MenuEstadisticas:
+    """
+    Clase para el menú de estadísticas.
+    
+    Attributes:
+        menu_principal (Menu): Instancia del menú principal.
+        estadisticas (Estadisticas): Instancia de las estadísticas.
+    """
     def __init__(self, menu_principal, estadisticas):
+        """
+        Inicializa las variables de la clase.
+
+        Args:
+            menu_principal (Menu): Instancia del menú principal.
+            estadisticas (Estadisticas): Instancia de las estadísticas.
+        """
         self.menu_principal = menu_principal
         self.estadisticas = estadisticas
         self.running = False
@@ -344,12 +472,18 @@ class MenuEstadisticas:
         self.boton_volver = None
 
     def iniciar_pygame(self):
+        """
+        Inicializa Pygame y las variables necesarias como la ventana, el reloj, la fuente y los botones.
+        """
         pygame.init()
         self.window = pygame.display.set_mode((500, 600))
         self.font = pygame.font.SysFont("Trebuchet MS", 20)
         self.boton_volver = Boton("Volver al Menú", (150, 500), (200, 50), self.font, self.volver_al_menu)
 
     def dibujar_estadisticas(self):
+        """
+        Dibuja las estadísticas en la ventana.
+        """
         self.window.fill((0, 0, 0))  # Fondo negro
 
         texto_titulo = self.font.render("Estadísticas", True, (255, 255, 255))
@@ -385,6 +519,9 @@ class MenuEstadisticas:
         pygame.display.flip()
 
     def iniciar_menu_estadisticas(self):
+        """
+        Inicia el menú de estadísticas.
+        """
         self.iniciar_pygame()
         self.running = True
 
@@ -403,6 +540,9 @@ class MenuEstadisticas:
         pygame.quit()
 
     def volver_al_menu(self):
+        """
+        Vuelve al menú principal.
+        """
         self.running = False
         self.menu_principal.iniciar_menu()
 
