@@ -122,8 +122,9 @@ class Menu:
         self.menu_crear_nivel.iniciar_menu()
 
     def jugar_nivel_creado(self):
-        # Implementar la lógica para jugar un nivel creado
-        self.cerrar_menu() # Para que no se creen botones superpuestos
+        self.cerrar_menu()
+        menu_seleccion_nivel = MenuSeleccionNivel(self, True)
+        menu_seleccion_nivel.iniciar_menu()
 
     def cerrar_menu(self):
         self.running = False
@@ -136,7 +137,7 @@ class Menu:
         self.boton_crear_nivel = None
 
 class MenuSeleccionNivel(Menu):
-    def __init__(self, menu_principal):
+    def __init__(self, menu_principal, niveles_creados=False):
         self.menu_principal = menu_principal
         self.running = False
         self.window = None
@@ -144,7 +145,7 @@ class MenuSeleccionNivel(Menu):
         self.niveles = []
         self.botones_niveles = []
         self.boton_seleccionado = 0
-        
+        self.niveles_creados = niveles_creados
 
         self.ambientes = {
             amb.AmbienteEnum.INVIERNO: amb.Ambiente(amb.AmbienteEnum.INVIERNO, "resources/environments/images/snowG.png", "resources/environments/music/invierno.ogg", range(1,10))
@@ -163,6 +164,9 @@ class MenuSeleccionNivel(Menu):
         # obtener lista de archivos de la carpeta
         archivo_niveles = 'levels/snow/levels.json'
         
+        if self.niveles_creados:
+            archivo_niveles = 'levels/creados/levels.json'
+            
         with open(archivo_niveles, 'r') as file:
             data = json.load(file)
         
