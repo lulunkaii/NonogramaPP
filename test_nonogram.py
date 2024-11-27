@@ -19,8 +19,8 @@ def test_actualizar_estadisticas():
     estadisticas = Estadisticas()
     estadisticas.actualizar(1, 2, 3)
 
-    assert estadisticas.horas_jugadas == 1
-    assert estadisticas.niveles_superados == 2
+    assert estadisticas.segundos_jugados == 1
+    assert estadisticas.cant_niveles_superados == 2
     assert estadisticas.puntuacion_total == 3
     
 if __name__ == '__main__':
