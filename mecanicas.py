@@ -2,10 +2,25 @@ import pygame, math, json
 from utils import SettingsManager, Colores, Boton
 
 class Celda:
+    """
+    Representa una celda unica con su color.
+
+    Attributes:
+        color (Color): El color de la cerda.
+    """
     def __init__(self):
+        """
+        Inicializa una clase celda con el color default.
+        """
         self.color = Colores.DEFAULT.value
 
     def click(self, color):
+        """
+        Cambia el color de la celda segun el color seleccionado
+
+        Args:
+            color (Color): El nuevo color de la celda (si es su color actual se le pone el default).
+        """
         if(color == self.color):
             self.color = Colores.DEFAULT.value
         else:    
@@ -15,10 +30,25 @@ class Celda:
         return self.color
 
 class Tablero:
+    """
+    Representa un tablero de celdas.
+    
+    Attributes:
+        matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
+        size_matriz (int): El tamaño de la matriz objetivo.
+        size_celda (int): El tamaño de las celdas.
+        tablero (List[List[Celda]]): La matriz de celdas.
+    """
     def __init__(self, matriz_objetivo):
+        """
+        Inicializa un tablero con la matriz objetivo.
+        
+        Args:
+            matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
+        """
         self.matriz_objetivo = matriz_objetivo
         self.size_matriz = len(matriz_objetivo[0])
-        self.cell_size = SettingsManager.CELL_SIZE.value
+        self.size_celda = SettingsManager.CELL_SIZE.value
         self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
         self.font = pygame.font.SysFont(None, 24)
 
@@ -28,6 +58,12 @@ class Tablero:
         self.color_seleccionado = Colores.BLACK.value
         
     def verificar(self):
+        """
+        Verifica si el tablero actual es igual a la matriz objetivo.
+        
+        Returns:
+            bool: True si el tablero es igual a la matriz objetivo, False en caso contrario.
+        """
         for row in range(len(self.tablero)):
             for col in range(len(self.tablero[row])):
                 color = self.tablero[row][col].get_color()
@@ -43,16 +79,32 @@ class Tablero:
                     return False
         return True 
                   
-    def draw(self, surface, edge_size, altura_barra_superior):
+    def draw(self, surface, size_borde, altura_barra_superior):
+        """
+        Dibuja el tablero en la superficie dada.
+        
+        Args:
+            surface (surface): La superficie en la que se dibujara el tablero.
+            size_borde (int): El tamaño del borde del tablero.
+            altura_barra_superior (int): La altura de la barra superior.
+        """
         # Dibujar la cuadricula
         for row, rowOfCells in enumerate(self.tablero):
             for col, cell in enumerate(rowOfCells):
                 color = cell.get_color()
                 pygame.draw.rect(surface, color, (
-                    (col + edge_size) * self.cell_size + 1,
-                    (row + edge_size) * self.cell_size + altura_barra_superior + 1, self.cell_size - 2, self.cell_size - 2))
+                    (col + size_borde) * self.size_celda + 1,
+                    (row + size_borde) * self.size_celda + altura_barra_superior + 1, self.size_celda - 2, self.size_celda - 2))
     
     def handle_click(self, pos, size_borde, presionando=False):
+        """
+        Maneja el click en el tablero.
+        
+        Args:
+            pos (Tuple[int, int]): La posicion del click.
+            size_borde (int): El tamaño del borde del tablero.
+            presionando (bool): True si el click se esta presionando, False en caso contrario.
+        """
         size_tablero = len(self.tablero)
         cell_size = SettingsManager.CELL_SIZE.value
 
@@ -82,7 +134,27 @@ class Tablero:
         return self.tablero
 
 class Nivel:
+    """
+    Representa un nivel del juego.
+    
+    Attributes:
+        altura_barra_superior (int): La altura de la barra superior.
+        matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
+        id (int): El identificador del nivel.
+        size_borde (int): El tamaño del borde del tablero.
+        secuencias_fila (List[List[Tuple[int, int]]]): Las secuencias de la matriz objetivo por fila.
+        secuencias_columna (List[List[Tuple[int, int]]]): Las secuencias de la matriz objetivo por columna.
+        completado (bool): True si el nivel esta completado, False en caso contrario.
+        tablero (Tablero): El tablero del nivel.
+    """
     def __init__(self, matriz_objetivo, id):
+        """
+        Inicializa un nivel con la matriz objetivo y el identificador.
+        
+        Args:
+            matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
+            id (int): El identificador del nivel.
+        """
         self.altura_barra_superior = SettingsManager.SIZE_BARRA_SUPERIOR.value
         self.matriz_objetivo = matriz_objetivo
         self.id = id
@@ -93,6 +165,14 @@ class Nivel:
         self.tablero = Tablero(matriz_objetivo)
         
     def __calcular_secuencias__(self, linea):
+        """
+        Calcula las secuencias de una linea.
+
+        Args:
+            linea (List(Celda)): La linea de la matriz objetivo
+        Returns:
+            int: El numero de secuencias en la linea.
+        """
         secuencias = 0
         valor_anterior = -1
         enSecuencia = False
@@ -106,6 +186,14 @@ class Nivel:
         return secuencias
     
     def __calcular_maxima_secuencia__(self, matriz_objetivo):
+        """
+        Calcula la maxima secuencia de la matriz objetivo.
+        
+        Args:
+            matriz_objetivo (List[List[int]]): La matriz objetivo.
+        Returns:
+            int: La maxima secuencia de la matriz objetivo.
+        """
         maxima_secuencia = 0
         for fila in matriz_objetivo:
             secuencia = self.__calcular_secuencias__(fila)
@@ -116,6 +204,14 @@ class Nivel:
         return maxima_secuencia
     
     def __calcular_secuencias_fila__(self,matriz_objetivo):
+        """
+        Calcula las secuencias de la matriz objetivo por fila.
+        
+        Args:
+            matriz_objetivo (List[List[int]]): La matriz objetivo.
+        Returns:
+            List[List[Tuple[int, int]]]: Las secuencias de la matriz objetivo por fila.
+        """
         secuencias = []
         for fila in matriz_objetivo:
             fila_secuencias = self.__get_secuencias__(fila)
@@ -123,6 +219,14 @@ class Nivel:
         return secuencias
     
     def __calcular_secuencias_columna__(self,matriz_objetivo):
+        """
+        Calcula las secuencias de la matriz objetivo por columna.
+        
+        Args:
+            matriz_objetivo (List[List[int]]): La matriz objetivo.
+        Returns:
+            List[List[Tuple[int, int]]]: Las secuencias de la matriz objetivo por columna.
+        """
         secuencias = []
         for columna in range(len(matriz_objetivo[0])):
             columna_secuencias = self.__get_secuencias__([matriz_objetivo[fila][columna] for fila in range(len(matriz_objetivo))])
@@ -130,6 +234,14 @@ class Nivel:
         return secuencias
     
     def __get_secuencias__(self, linea):
+        """
+        Obtiene las secuencias de una linea.
+        
+        Args:
+            linea (List[int]): La linea de la matriz objetivo.
+        Returns:
+            List[Tuple[int, int]]: Las secuencias de la linea.
+        """
         secuencias = []
         count = 0
         valor_anterior = 0
@@ -148,6 +260,12 @@ class Nivel:
         return secuencias
 
     def draw(self, surface):
+        """
+        Dibuja el nivel en la superficie dada.
+
+        Args:
+            surface (Surface): La superficie en la que se dibujara el nivel.
+        """
         size_matriz = self.tablero.get_size_matriz()
         # Pintar la barra superior
         pygame.draw.rect(surface, SettingsManager.TITLE_BAR_COLOR.value, (0, 0, (size_matriz + self.size_borde) * SettingsManager.CELL_SIZE.value, self.altura_barra_superior))
@@ -207,12 +325,28 @@ class Nivel:
         self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
                             
     def verificar(self):
-        return self.tablero.verificar()
+        """
+        Verifica si el nivel esta completado.
+        
+        Returns:
+            bool: True si el nivel esta completado, False en caso contrario.
+        """
+        completado = self.tablero.verificar()
+        if completado:
+            self.completado = True
+        return completado
         
     def get_size_borde(self):
         return self.size_borde
             
     def handle_click(self, pos, presionando=False):
+        """
+        Maneja el click en el nivel.
+
+        Args:
+            pos (Tuple[int, int]): La posicion del click.
+            presionando (bool): True si el click se esta presionando, False en caso contrario.
+        """
         self.tablero.handle_click(pos, self.size_borde, presionando)
     
     def get_id(self):
@@ -222,11 +356,33 @@ class Nivel:
         return len(self.matriz_objetivo[0])
     
     def isCompleted(self):
+        """
+        Verifica si el nivel fue completado en algun momento.
+                
+        Returns:
+            bool: True si el nivel esta completado, False en caso contrario.
+        """
         return self.completado
     
     
 class Partida:
+    """
+    Representa una partida del juego.
+    
+    Attributes:
+        nivel (Nivel): El nivel de la partida.
+        menu (Menu): El menu de la partida.
+        tiempo_inicio (int): El tiempo de inicio de la partida.
+        estadisticas (Estadisticas): Las estadisticas de la partida.
+    """
     def __init__(self, menu, nivel):
+        """
+        Inicializa una partida con el nivel y el menu.
+        
+        Args:
+            menu (Menu): El menu de la partida.
+            nivel (Nivel): El nivel de la partida.
+        """
         self.nivel = nivel
         size_tablero = nivel.get_size_matriz()
         
@@ -253,6 +409,12 @@ class Partida:
         self.estadisticas.cargarEstadisticas()
 
     def mostrar_mensaje(self, mensaje):
+        """
+        Muestra un mensaje en la pantalla.
+        
+        Args:
+            mensaje (str): El mensaje a mostrar.
+        """
         texto = self.fuente.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
         rect = texto.get_rect(center=(self.ancho_ventana // 2, self.altura_ventana // 2))
 
@@ -271,6 +433,10 @@ class Partida:
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
     def handle_events(self):
+        """
+        Maneja los eventos de la partida.
+        
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 
@@ -306,15 +472,24 @@ class Partida:
                 self.salir()
 
     def draw(self):
+        """
+        Dibuja la partida.
+        """
         self.nivel.draw(self.window)
         for button in self.botones:
             button.draw(self.window)
 
     def salir(self):
+        """
+        Sale de la partida.
+        """
         self.running = False
         self.menu.volver_al_menu()
 
     def run(self):
+        """
+        Ejecuta la partida.
+        """
         self.tiempo_inicio = pygame.time.get_ticks()
         self.running = True
         while self.running:
@@ -334,17 +509,42 @@ class Partida:
         return 0
 
 class Estadisticas:
+    """
+    Representa las estadisticas de un jugador.
+    
+    Attributes:
+        id (int): El identificador del jugador.
+        segundos_jugados (int): Los segundos jugados por el jugador.
+        cant_niveles_superados (int): La cantidad de niveles superados por el jugador.
+        puntuacion_total (int): La puntuacion total del jugador.
+        niveles_completados (List[str]): Los niveles completados por el jugador.
+    """
     def __init__(self, id=1):
+        """
+        Inicializa las estadisticas con el identificador del jugador.
+        
+        Args:
+            id (int): El identificador del jugador.
+        """
         self.id = id
         self.segundos_jugados = 0
-        self.niveles_superados = 0
+        self.cant_niveles_superados = 0
         self.puntuacion_total = 0
         self.niveles_completados = []
         self.__verificarArchivo__()
 
-    def actualizar(self, minutos, niveles, puntuacion, nivel_completado=None):
-        self.segundos_jugados += minutos
-        self.niveles_superados += niveles
+    def actualizar(self, segundos, niveles, puntuacion, nivel_completado=None):
+        """
+        Actualiza las estadisticas del jugador.
+        
+        Args:
+            segundos (int): Los segundos jugados.
+            niveles (int): La cantidad de niveles superados.
+            puntuacion (int): La puntuacion obtenida.
+            nivel_completado (str): El nivel completado.
+        """
+        self.segundos_jugados += segundos
+        self.cant_niveles_superados += niveles
         self.puntuacion_total += puntuacion
         if nivel_completado:
             if nivel_completado.endswith(".txt"):
@@ -355,6 +555,9 @@ class Estadisticas:
         self.__guardarEstadisticas__()
 
     def __verificarArchivo__(self):
+        """
+        Verifica si el archivo de estadisticas existe, si no lo crea.
+        """
         try:
             open("data/estadisticas.json", "r")
         except FileNotFoundError: 
@@ -372,6 +575,9 @@ class Estadisticas:
                 json.dump(nuevas_estadisticas, file, indent=4)
         
     def cargarEstadisticas(self):
+        """
+        Carga las estadisticas del jugador.
+        """
         estadisticas = {}
 
         try:
@@ -387,12 +593,15 @@ class Estadisticas:
         for user in estadisticas:
             if user["id"] == self.id:
                 self.segundos_jugados = user["segundos_jugados"]
-                self.niveles_superados = user["niveles_superados"]
+                self.cant_niveles_superados = user["niveles_superados"]
                 self.puntuacion_total = user["puntuacion_total"]
                 self.niveles_completados = user["niveles_completados"]
                 break
         
     def __guardarEstadisticas__(self):
+        """
+        Guarda las estadisticas del jugador.
+        """
         try:
             with open("data/estadisticas.json", "r") as file:
                 estadisticas = json.load(file)
@@ -403,7 +612,7 @@ class Estadisticas:
         for user in estadisticas:
            if user["id"] == self.id:
                 user["segundos_jugados"] = self.segundos_jugados
-                user["niveles_superados"] = self.niveles_superados
+                user["niveles_superados"] = self.cant_niveles_superados
                 user["puntuacion_total"] = self.puntuacion_total
                 user["niveles_completados"] = self.niveles_completados
                 break
@@ -418,7 +627,7 @@ class Estadisticas:
         return self.segundos_jugados
     
     def getNivelesSuperados(self):
-        return self.niveles_superados
+        return self.cant_niveles_superados
     
     def getPuntuacionTotal(self):
         return self.puntuacion_total
@@ -427,7 +636,21 @@ class Estadisticas:
         return self.niveles_completados
 
 class CrearNivel:
+    """
+    Representa la creación de un nivel.
+    
+    Attributes:
+        menu (Menu): El menu principal.
+        nivel (Nivel): El nivel a crear.
+    """
     def __init__(self, menu_principal, nivel):
+        """
+        Inicializa la creación de un nivel con el menu principal y el nivel.
+        
+        Args:
+            menu_principal (Menu): El menu principal.
+            nivel (Nivel): El nivel a crear.
+        """
         self.menu = menu_principal
         self.nivel = nivel
         self.altura_ventana = 600
@@ -443,6 +666,9 @@ class CrearNivel:
         self.color_seleccionado = Colores.DEFAULT
 
     def handle_events(self):
+        """
+        Maneja los eventos de la creación del nivel.
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -460,6 +686,9 @@ class CrearNivel:
                 self.boton_guardar.handle_event(event)
     
     def dibujar(self):
+        """
+        Dibuja la creación del nivel.
+        """
         # Fondo
         self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
 
@@ -479,6 +708,9 @@ class CrearNivel:
         pygame.display.flip()
 
     def run(self):
+        """
+        Ejecuta la creación del nivel.
+        """
         self.running = True
         while self.running:
             self.clock.tick(60)
@@ -491,6 +723,9 @@ class CrearNivel:
         pygame.quit()
 
     def guardar_nivel(self):
+        """
+        Guarda el nivel creado.
+        """
         tablero = self.nivel.tablero.get_tablero()
         matriz = []
         for fila in tablero:
