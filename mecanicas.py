@@ -345,7 +345,7 @@ class Nivel:
 
         Args:
             pos (Tuple[int, int]): La posicion del click.
-            presionando (bool): True si el click se esta presionando, False en caso contrario.
+            presionando (bool, optional): True si el click se esta presionando, False en caso contrario. Defaults to False.
         """
         self.tablero.handle_click(pos, self.size_borde, presionando)
     
@@ -524,7 +524,7 @@ class Estadisticas:
         Inicializa las estadisticas con el identificador del jugador.
         
         Args:
-            id (int): El identificador del jugador.
+            id (int, optional): El identificador del jugador. Defaults to 1.
         """
         self.id = id
         self.segundos_jugados = 0
@@ -541,7 +541,7 @@ class Estadisticas:
             segundos (int): Los segundos jugados.
             niveles (int): La cantidad de niveles superados.
             puntuacion (int): La puntuacion obtenida.
-            nivel_completado (str): El nivel completado.
+            nivel_completado (str, optional): El nivel completado. Defaults to None.
         """
         self.segundos_jugados += segundos
         self.cant_niveles_superados += niveles

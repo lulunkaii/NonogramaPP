@@ -199,7 +199,7 @@ class MenuSeleccionNivel(Menu):
         
         Args:
             menu_principal (Menu): Instancia del menú principal.
-            niveles_creados (bool): Indica si se deben cargar los niveles creados.
+            niveles_creados (bool, optional): Indica si se deben cargar los niveles creados. Defaults to False.
         """
         self.menu_principal = menu_principal
         self.running = False
