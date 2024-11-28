@@ -4,8 +4,6 @@ import pygame
 class SettingsManager(Enum):
     GRID_SIZE = 10
     CELL_SIZE = 40
-    DEFAULT_COLOR = (255, 255, 255)
-    CLICKED_COLOR = (0, 0, 0)
     COLOR_SELECTOR_COLOR = (128, 64, 0)
     BACKGROUND_COLOR = (0, 0, 0)
     MENU_BACKGROUND_COLOR = (50, 50, 50)
@@ -15,8 +13,9 @@ class SettingsManager(Enum):
     BUTTON_HOVER_COLOR = (0, 218, 255)
     GRID_BACKGROUND_COLOR = (0, 155, 155)
     TITLE_BAR_COLOR = (100, 100, 100)
+    SIZE_BARRA_SUPERIOR = 50
 
-class colorCelda(Enum):
+class Colores(Enum):
     DEFAULT = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
