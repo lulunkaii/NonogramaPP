@@ -399,7 +399,7 @@ class Partida:
 
         #Botones
         self.fuente = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
-        self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 100)
+        self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
         self.boton_salir = Boton("Salir", (self.ancho_ventana // 4, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), ( self.ancho_ventana // 2, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
         self.botones = [self.boton_salir]
 
@@ -441,25 +441,10 @@ class Partida:
             if event.type == pygame.QUIT:
                 self.running = False 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.nivel.handle_click(event.pos)
+                self.nivel.handle_click(event.pos)                
 
-                # Redibujar el tablero después del clic
-                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.draw()
-                pygame.display.flip()                               
-               
-                # Verificar si el nivel está completado después de procesar el clic
-                if self.nivel.verificar():
-                    self.mostrar_mensaje("¡Nivel completado!")
-                    self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
-                    self.salir()
-            
-            for button in self.botones:
-                button.handle_event(event)
-            
         if pygame.mouse.get_pressed()[0]:
-            self.nivel.handle_click(pygame.mouse.get_pos(),True)
-
+            self.nivel.handle_click(pygame.mouse.get_pos(),True)            
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
