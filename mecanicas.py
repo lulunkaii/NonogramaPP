@@ -53,9 +53,10 @@ class Tablero:
         self.font = pygame.font.SysFont(None, 24)
 
         # Variables para manejar el click
-        self.celda_anterior = 0 
-        self.color_arrastre = 0
+        self.celda_anterior = None
+        self.color_arrastre = None
         self.color_seleccionado = Colores.BLACK.value
+        self.color_anterior = self.color_seleccionado
         
     def verificar(self):
         """
@@ -115,9 +116,14 @@ class Tablero:
                 if self.tablero[row][col].get_color() != self.color_arrastre: 
                     self.tablero[row][col].click(self.color_seleccionado)                             
             elif not presionando:
-                self.tablero[row][col].click(self.color_seleccionado)
-                self.color_seleccionado = self.tablero[row][col].get_color()
-                self.color_arrastre = self.tablero[row][col].get_color()
+                self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
+                if self.color_seleccionado == Colores.DEFAULT.value:
+                    self.tablero[row][col].click(self.color_seleccionado)                    
+                else:
+                     self.tablero[row][col].click(self.color_seleccionado)
+                     self.color_anterior = self.color_seleccionado  # Recordar el color actual
+                     self.color_seleccionado = self.tablero[row][col].get_color()
+                     self.color_arrastre = self.tablero[row][col].get_color()
 
             self.celda_anterior = self.tablero[row][col]
         
@@ -125,7 +131,8 @@ class Tablero:
             cx = (size_borde+0.5+index)*cell_size
             cy = (size_tablero+size_borde+0.5)*cell_size + SettingsManager.SIZE_BARRA_SUPERIOR.value
             if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
-                self.color_seleccionado = color.value                
+                self.color_seleccionado = color.value   
+                self.color_anterior = self.color_seleccionado             
    
     def get_size_matriz(self):
         return self.size_matriz
