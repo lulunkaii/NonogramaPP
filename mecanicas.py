@@ -374,6 +374,12 @@ class Nivel:
     def get_tablero(self):
         return self.tablero
     
+    def set_tablero(self, tablero):
+        self.tablero = tablero
+    
+    def get_matriz(self):
+        return self.matriz_objetivo
+
     
 class Partida:
     """
@@ -410,8 +416,9 @@ class Partida:
         #Botones
         self.fuente = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
         self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
-        self.boton_salir = Boton("Salir", (self.ancho_ventana // 4, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), ( self.ancho_ventana // 2, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
-        self.botones = [self.boton_salir]
+        self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
+        self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
+        self.botones = [self.boton_salir, self.boton_reiniciar]
 
         #Estadisticas
         self.tiempo_inicio = None
@@ -495,6 +502,7 @@ class Partida:
             if self.nivel.verificar():
                 self.mostrar_mensaje_animado("¡Nivel completado!")
                 self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
+                self.reiniciar_nivel()
                 self.salir()
 
     def draw(self):
@@ -568,6 +576,15 @@ class Partida:
                     break
         except (FileNotFoundError, json.JSONDecodeError):
             pass
+
+    def reiniciar_nivel(self):
+        self.nivel.set_tablero(Tablero(self.nivel.get_matriz()))
+        self.tablero = self.nivel.get_tablero()  # Reiniciar el tablero con la matriz objetivo original
+        self.window.fill(SettingsManager.BACKGROUND_COLOR.value)  # Limpiar la ventana
+        self.draw()  # Redibujar el tablero
+        pygame.display.flip()  # Actualizar la pantalla
+
+
 
 
     def run(self):
