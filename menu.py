@@ -5,8 +5,10 @@ import ambiente as amb
 
 # Carga de sonidos
 pygame.mixer.init()
-sonido_seleccion = pygame.mixer.Sound("resources/sounds/seleccion.wav")
+sonido_seleccion = pygame.mixer.Sound("resources/sounds/aldeano.wav")
 sonido_presion = pygame.mixer.Sound("resources/sounds/presion.wav")
+sonido_aldeano = pygame.mixer.Sound("resources/sounds/seleccion.wav")
+
 
 class Menu:
     """
