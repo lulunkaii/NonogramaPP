@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "nombre": "Usuario 1",
+        "segundos_jugados": 35,
+        "niveles_superados": 2,
+        "puntuacion_total": 3,
+        "niveles_completados": [
+            "Nivel1-Nieve"
+        ]
+    }
+]

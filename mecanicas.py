@@ -55,7 +55,10 @@ class Tablero:
         # Variables para manejar el click
         self.celda_anterior = None
         self.color_arrastre = None
+        self.celda_anterior = None
+        self.color_arrastre = None
         self.color_seleccionado = Colores.BLACK.value
+        self.color_anterior = self.color_seleccionado
         self.color_anterior = self.color_seleccionado
         
     def verificar(self):
@@ -116,6 +119,14 @@ class Tablero:
                 if self.tablero[row][col].get_color() != self.color_arrastre: 
                     self.tablero[row][col].click(self.color_seleccionado)                             
             elif not presionando:
+                self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
+                if self.color_seleccionado == Colores.DEFAULT.value:
+                    self.tablero[row][col].click(self.color_seleccionado)                    
+                else:
+                     self.tablero[row][col].click(self.color_seleccionado)
+                     self.color_anterior = self.color_seleccionado  # Recordar el color actual
+                     self.color_seleccionado = self.tablero[row][col].get_color()
+                     self.color_arrastre = self.tablero[row][col].get_color()
                 self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
                 if self.color_seleccionado == Colores.DEFAULT.value:
                     self.tablero[row][col].click(self.color_seleccionado)                    
@@ -403,6 +414,13 @@ class Nivel:
         return self.matriz_objetivo
 
     
+    def set_tablero(self, tablero):
+        self.tablero = tablero
+    
+    def get_matriz(self):
+        return self.matriz_objetivo
+
+    
 class Partida:
     """
     Representa una partida del juego.
@@ -438,6 +456,9 @@ class Partida:
         #Botones
         self.fuente = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
         self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
+        self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
+        self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
+        self.botones = [self.boton_salir, self.boton_reiniciar]
         self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
         self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
         self.botones = [self.boton_salir, self.boton_reiniciar]
