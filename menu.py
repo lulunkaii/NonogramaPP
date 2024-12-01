@@ -239,7 +239,7 @@ class MenuSeleccionNivel(Menu):
             data = json.load(file)
         
         for nivel in data:
-            self.niveles.append(Nivel(nivel["matriz"], nivel["nombre"]))
+            self.niveles.append(Nivel(nivel["matriz"], nivel["nombre"], nivel.get("vidas", 3)))
 
         # Crear botones para los niveles
         

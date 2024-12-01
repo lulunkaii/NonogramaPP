@@ -548,6 +548,7 @@ class Partida:
         self.guardar_progreso(self.nivel.id) # guarda el progreso cuando sale den nivel
         self.running = False
         self.menu.volver_al_menu()
+
     def guardar_progreso(self, nivel_id):
         size = self.tablero.get_size_matriz()
         progreso = [[0 for _ in range(size)] for _ in range(size)]
@@ -571,15 +572,15 @@ class Partida:
         try:
             with open('levels\partidas\partidasencurso.json', 'r') as file:
                 partidas = json.load(file)
-        except FileNotFoundError:
-            partidas = []
+        except (FileNotFoundError, json.JSONDecodeError):
+            partidas = {}
 
         for partida in partidas:
             if partida['id'] == nivel_id:
                 partida['progreso'] = progreso
                 break
-        else:
-            partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas})
+        
+        partidas[nivel_id] = {'progreso': progreso, 'vidas': self.nivel.vidas}
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
