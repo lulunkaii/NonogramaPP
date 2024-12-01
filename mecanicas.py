@@ -579,7 +579,7 @@ class Partida:
                 partida['progreso'] = progreso
                 break
         else:
-            partidas.append({'id': nivel_id, 'progreso': progreso})
+            partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas})
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
@@ -593,6 +593,7 @@ class Partida:
             for partida in partidas:
                 if partida['id'] == nivel_id:
                     progreso = partida['progreso']
+                    self.nivel.vidas = partida['vidas']
                     for row in range(self.tablero.get_size_matriz()):
                         for col in range(self.tablero.get_size_matriz()):
                             color = progreso[row][col]
