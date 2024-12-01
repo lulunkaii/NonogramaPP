@@ -96,42 +96,47 @@ class Tablero:
                     (col + size_borde) * self.size_celda + 1,
                     (row + size_borde) * self.size_celda + altura_barra_superior + 1, self.size_celda - 2, self.size_celda - 2))
     
-    def handle_click(self, pos, size_borde, presionando=False):
+    def handle_click(self, pos, size_borde, altura_barra_superior, presionando=False):
         """
         Maneja el click en el tablero.
         
         Args:
             pos (Tuple[int, int]): La posicion del click.
             size_borde (int): El tamaño del borde del tablero.
+            altura_barra_superior (int): La altura de la barra superior.
             presionando (bool): True si el click se esta presionando, False en caso contrario.
+        
+        Returns:
+            bool: True si se cometió un error, False en caso contrario.
         """
         size_tablero = len(self.tablero)
         cell_size = SettingsManager.CELL_SIZE.value
 
-        row = (pos[1] - (size_borde * cell_size) - SettingsManager.SIZE_BARRA_SUPERIOR.value ) // cell_size
-        col = (pos[0] - size_borde * cell_size) // cell_size
+        row = (pos[1] - altura_barra_superior) // cell_size
+        col = (pos[0] - size_borde) // cell_size
         if 0 <= row < size_tablero and 0 <= col < size_tablero:
             if self.celda_anterior != self.tablero[row][col] and presionando:
                 if self.tablero[row][col].get_color() != self.color_arrastre: 
-                    self.tablero[row][col].click(self.color_seleccionado)                             
+                    self.tablero[row][col].click(self.color_seleccionado)
+                    return not self.verificar()
             elif not presionando:
                 self.tablero[row][col].click(self.color_seleccionado)
                 self.color_seleccionado = self.tablero[row][col].get_color()
                 self.color_arrastre = self.tablero[row][col].get_color()
+                return not self.verificar()
 
             self.celda_anterior = self.tablero[row][col]
         
-        for index, color in enumerate(Colores):
-            cx = (size_borde+0.5+index)*cell_size
-            cy = (size_tablero+size_borde+0.5)*cell_size + SettingsManager.SIZE_BARRA_SUPERIOR.value
-            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
-                self.color_seleccionado = color.value                
+        return False              
    
     def get_size_matriz(self):
         return self.size_matriz
 
     def get_tablero(self):
         return self.tablero
+    
+    def reiniciar_tablero(self):
+        self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
 
 class Nivel:
     """
@@ -339,15 +344,17 @@ class Nivel:
     def get_size_borde(self):
         return self.size_borde
             
-    def handle_click(self, pos, presionando=False):
+    def handle_click(self, pos, size_borde, altura_barra_superior, presionando=False):
         """
         Maneja el click en el nivel.
 
         Args:
             pos (Tuple[int, int]): La posicion del click.
+            size_borde (int): El tamaño del borde del tablero.
+            altura_barra_superior (int): La altura de la barra superior.
             presionando (bool, optional): True si el click se esta presionando, False en caso contrario. Defaults to False.
         """
-        self.tablero.handle_click(pos, self.size_borde, presionando)
+        return self.tablero.handle_click(pos, size_borde, altura_barra_superior, presionando)
     
     def get_id(self):
         return self.id
@@ -367,6 +374,13 @@ class Nivel:
     def get_tablero(self):
         return self.tablero
     
+    def reiniciar_tablero(self):
+        """
+        Reinicia el tablero del nivel.
+        """
+        self.tablero.reiniciar_tablero()
+        self.completado = False
+    
     
 class Partida:
     """
@@ -377,6 +391,7 @@ class Partida:
         menu (Menu): El menu de la partida.
         tiempo_inicio (int): El tiempo de inicio de la partida.
         estadisticas (Estadisticas): Las estadisticas de la partida.
+        vidas (int): Las vidas de la partida.
     """
     def __init__(self, menu, nivel):
         """
@@ -388,6 +403,7 @@ class Partida:
         """
         self.nivel = nivel
         size_tablero = nivel.get_size_matriz()
+        self.vidas = 3
         
         #Referencia a menu 
         self.menu = menu
@@ -466,7 +482,11 @@ class Partida:
             if event.type == pygame.QUIT:
                 self.running = False 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.nivel.handle_click(event.pos)
+                if self.nivel.handle_click(event.pos, self.menu.size_borde, self.menu.altura_barra_superior):
+                    self.vidas -= 1
+                    if self.vidas <= 0:
+                        self.reiniciar_nivel()
+                        self.volver_a_seleccion_nivel()
 
                 # Redibujar el tablero después del clic
                 self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
@@ -477,18 +497,23 @@ class Partida:
                     button.handle_event(event)    
                                              
         if pygame.mouse.get_pressed()[0]:
-            self.nivel.handle_click(pygame.mouse.get_pos(), True)                          
+            if self.nivel.handle_click(pygame.mouse.get_pos(), self.menu.size_borde, self.menu.altura_barra_superior, True):
+                self.vidas -= 1
+                if self.vidas <= 0:
+                    self.mostrar_mensaje_animado("¡Perdiste!")
+                    self.reiniciar_nivel()
+                    self.volver_a_seleccion_nivel()
 
             # Redibujar el tablero después del clic
-            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.menu.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
-            pygame.display.flip()                           
-               
-            # Verificar si el nivel está completado después de procesar el clic
-            if self.nivel.verificar():
-                self.mostrar_mensaje_animado("¡Nivel completado!")
-                self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
-                self.salir()
+            pygame.display.flip()
+
+        # Verificar si el nivel está completado después de procesar el clic
+        if self.nivel.verificar():
+            self.mostrar_mensaje_animado("¡Nivel completado!")
+            self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
+            self.salir()
 
     def draw(self):
         self.nivel.draw(self.window)
@@ -579,6 +604,14 @@ class Partida:
             elapsed_time_ms = pygame.time.get_ticks() - self.tiempo_inicio
             return elapsed_time_ms // 1000  # Convertir a segundos
         return 0
+    
+    def reiniciar_nivel(self):
+        self.nivel.reiniciar_tablero()
+        self.vidas = 3
+
+    def volver_a_seleccion_nivel(self):
+        self.running = False
+        self.menu.ir_a_seleccion_nivel()
     
 
 class Estadisticas:

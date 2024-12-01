@@ -36,6 +36,8 @@ class Menu:
         self.fondo_imagen = pygame.transform.scale(self.fondo_imagen, (500, 716))
         self.frames_titulo = []
         self.frame_index_titulo = 0
+        self.size_borde = 10  
+        self.altura_barra_superior = 50  
         for i in range(1,24):
             img = pygame.image.load("resources/title/title_"+str(i)+".png")
             img = pygame.transform.scale(img, (200, 137))
