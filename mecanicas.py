@@ -1,4 +1,4 @@
-import pygame, math, json
+import pygame, math, json, random 
 from utils import SettingsManager, Colores, Boton
 
 class Celda:
@@ -364,6 +364,9 @@ class Nivel:
         """
         return self.completado
     
+    def get_tablero(self):
+        return self.tablero
+    
     
 class Partida:
     """
@@ -408,13 +411,12 @@ class Partida:
         self.estadisticas = Estadisticas()
         self.estadisticas.cargarEstadisticas()
 
-    def mostrar_mensaje(self, mensaje):
-        """
-        Muestra un mensaje en la pantalla.
-        
-        Args:
-            mensaje (str): El mensaje a mostrar.
-        """
+        #Cargar progreso
+        self.tablero = self.nivel.get_tablero()
+        self.cargar_progreso(nivel.id)
+
+    def mostrar_mensaje_animado(self, mensaje):
+        alpha = 0
         texto = self.fuente.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
         rect = texto.get_rect(center=(self.ancho_ventana // 2, self.altura_ventana // 2))
 
@@ -426,55 +428,122 @@ class Partida:
             rect.width + 2 * padding,
             rect.height + 2 * padding
         )
-        pygame.draw.rect(self.window, Colores.DEFAULT.value, background_rect)
 
-        self.window.blit(texto, rect)
-        pygame.display.flip()
+        # Crear una superficie transparente para el texto
+        text_surface = pygame.Surface((rect.width + 2 * padding, rect.height + 2 * padding), pygame.SRCALPHA)
+        text_surface.fill((255, 255, 255, 0))  # Fondo transparente
+
+        # Crear fuegos artificiales
+        fireworks = [Firework(random.randint(0, self.ancho_ventana), random.randint(0, self.altura_ventana)) for _ in range(300)]
+
+        # Animar la aparición del texto y los fuegos artificiales
+        for alpha in range(0, 256, 5):
+            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.draw()
+
+            # Dibujar el rectángulo de fondo
+            pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
+ 
+            # Renderizar el texto con la opacidad actual
+            text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
+            text_surface.blit(texto, (padding, padding))
+            text_surface.set_alpha(alpha)
+
+            # Dibujar fuegos artificiales
+            for firework in fireworks:
+                firework.update()
+                firework.draw(self.window)
+
+            # Blit la superficie del texto en la ventana principal
+            self.window.blit(text_surface, (rect.left - padding, rect.top - padding))
+            pygame.display.flip()
+            pygame.time.wait(30)  # Espera un poco para crear el efecto de animación
+
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
     def handle_events(self):
-        """
-        Maneja los eventos de la partida.
-        
-        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                self.nivel.handle_click(event.pos)                
+                self.nivel.handle_click(event.pos)
 
+                # Redibujar el tablero después del clic
+                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+                self.draw()
+                pygame.display.flip()
+
+                for button in self.botones:
+                    button.handle_event(event)    
+                                             
         if pygame.mouse.get_pressed()[0]:
-            self.nivel.handle_click(pygame.mouse.get_pos(),True)            
+            self.nivel.handle_click(pygame.mouse.get_pos(), True)                          
+
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
-            pygame.display.flip()                               
+            pygame.display.flip()                           
                
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar():
-                self.mostrar_mensaje("¡Nivel completado!")
+                self.mostrar_mensaje_animado("¡Nivel completado!")
                 self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                 self.salir()
 
     def draw(self):
-        """
-        Dibuja la partida.
-        """
         self.nivel.draw(self.window)
         for button in self.botones:
             button.draw(self.window)
 
     def salir(self):
-        """
-        Sale de la partida.
-        """
+        print("saliendo de nivel...")
+        self.guardar_progreso(self.nivel.id) # guarda el progreso cuando sale den nivel
         self.running = False
         self.menu.volver_al_menu()
+    def guardar_progreso(self, nivel_id):
+        size = self.tablero.get_size_matriz()
+        progreso = [[0 for _ in range(size)] for _ in range(size)]
+        tablero = self.tablero.get_tablero()
+        for row in range(size):
+            for col in range(size):                
+                color = tablero[row][col].get_color()
+                if color == Colores.DEFAULT.value:
+                    color = 0
+                if color == Colores.BLACK.value: 
+                    color = 1                   
+                if color == Colores.RED.value:
+                    color = 2                     
+                if color == Colores.GREEN.value:
+                    color = 3  
+                if color == Colores.BLUE.value:
+                    color = 4 
+
+                progreso[row][col] = color
+            
+        try:
+            with open('levels\partidas\partidasencurso.json', 'r') as file:
+                partidas = json.load(file)
+        except FileNotFoundError:
+            partidas = []
+
+        for partida in partidas:
+            if partida['id'] == nivel_id:
+                partida['progreso'] = progreso
+                break
+        else:
+            partidas.append({'id': nivel_id, 'progreso': progreso})
+
+        with open('levels\partidas\partidasencurso.json', 'w') as file:
+            json.dump(partidas, file, indent=1)
+
+        print(f"Progreso guardado para nivel {nivel_id}: {progreso}")
+
+    def cargar_progreso(self, nivel_id):
+       
+            pass
+
 
     def run(self):
-        """
-        Ejecuta la partida.
-        """
         self.tiempo_inicio = pygame.time.get_ticks()
         self.running = True
         while self.running:
@@ -482,9 +551,7 @@ class Partida:
             self.handle_events()         
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
-
             pygame.display.flip()
-
         pygame.quit()
     
     def get_tiempo_partida(self):
@@ -492,6 +559,7 @@ class Partida:
             elapsed_time_ms = pygame.time.get_ticks() - self.tiempo_inicio
             return elapsed_time_ms // 1000  # Convertir a segundos
         return 0
+    
 
 class Estadisticas:
     """
@@ -746,3 +814,28 @@ class CrearNivel:
                 print("Error al guardar el nivel.")
         self.running = False
         self.menu.volver_al_menu()
+
+class Firework:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.particles = []
+        self.create_particles()
+
+    def create_particles(self):
+        for _ in range(100):
+            size = random.randint(2, 5)
+            color = random.choice([pygame.Color('red'), pygame.Color('green'), pygame.Color('blue'), pygame.Color('yellow')])
+            speed_x = random.uniform(-2, 2)
+            speed_y = random.uniform(-2, 2)
+            self.particles.append([self.x, self.y, size, color, speed_x, speed_y])
+
+    def update(self):
+        for particle in self.particles:
+            particle[0] += particle[4]
+            particle[1] += particle[5]
+            particle[5] += 0.1  # Gravity effect
+
+    def draw(self, surface):
+        for particle in self.particles:
+            pygame.draw.circle(surface, particle[3], (int(particle[0]), int(particle[1])), particle[2])
