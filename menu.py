@@ -432,7 +432,8 @@ class MenuCrearNivel(Menu):
         Crea un nuevo nivel vacío y abre el apartado de creación de niveles.
         """
         nombre_nivel = self.pedir_nombre_nivel()
-        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel)
+        vidas = 3
+        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel, vidas)
         self.partida_en_curso = CrearNivel(self, nivel_vacio)
         self.partida_en_curso.run()
 

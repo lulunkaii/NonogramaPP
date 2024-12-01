@@ -174,13 +174,14 @@ class Nivel:
         tablero (Tablero): El tablero del nivel.
         vidas (int): La cantidad de vidas del nivel.
     """
-    def __init__(self, matriz_objetivo, id):
+    def __init__(self, matriz_objetivo, id, vidas):
         """
         Inicializa un nivel con la matriz objetivo y el identificador.
         
         Args:
             matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
             id (int): El identificador del nivel.
+            vidas (int): La cantidad de vidas del nivel.
         """
         self.altura_barra_superior = SettingsManager.SIZE_BARRA_SUPERIOR.value
         self.matriz_objetivo = matriz_objetivo
@@ -190,7 +191,7 @@ class Nivel:
         self.secuencias_columna = self.__calcular_secuencias_columna__(matriz_objetivo)
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
-        self.vidas = 3
+        self.vidas = vidas
         
     def __calcular_secuencias__(self, linea):
         """
