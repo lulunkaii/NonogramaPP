@@ -1,6 +1,10 @@
 import pygame, math, json, random 
 from utils import SettingsManager, Colores, Boton
 
+# Carga de sonidos
+pygame.mixer.init()
+sonido_click = pygame.mixer.Sound("resources/sounds/sonidochill.wav")
+
 class Celda:
     """
     Representa una celda unica con su color.
@@ -21,6 +25,7 @@ class Celda:
         Args:
             color (Color): El nuevo color de la celda (si es su color actual se le pone el default).
         """
+        sonido_click.play()
         if(color == self.color):
             self.color = Colores.DEFAULT.value
         else:    
