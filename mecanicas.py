@@ -55,7 +55,10 @@ class Tablero:
         # Variables para manejar el click
         self.celda_anterior = None
         self.color_arrastre = None
+        self.celda_anterior = None
+        self.color_arrastre = None
         self.color_seleccionado = Colores.BLACK.value
+        self.color_anterior = self.color_seleccionado
         self.color_anterior = self.color_seleccionado
         
     def verificar(self):
@@ -124,6 +127,14 @@ class Tablero:
                      self.color_anterior = self.color_seleccionado  # Recordar el color actual
                      self.color_seleccionado = self.tablero[row][col].get_color()
                      self.color_arrastre = self.tablero[row][col].get_color()
+                self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
+                if self.color_seleccionado == Colores.DEFAULT.value:
+                    self.tablero[row][col].click(self.color_seleccionado)                    
+                else:
+                     self.tablero[row][col].click(self.color_seleccionado)
+                     self.color_anterior = self.color_seleccionado  # Recordar el color actual
+                     self.color_seleccionado = self.tablero[row][col].get_color()
+                     self.color_arrastre = self.tablero[row][col].get_color()
 
             self.celda_anterior = self.tablero[row][col]
         
@@ -132,7 +143,26 @@ class Tablero:
             cy = (size_tablero+size_borde+0.5)*cell_size + SettingsManager.SIZE_BARRA_SUPERIOR.value
             if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
                 self.color_seleccionado = color.value   
-                self.color_anterior = self.color_seleccionado             
+                self.color_anterior = self.color_seleccionado  
+
+    def comparar(self):
+        """
+        Compara el tablero actual con la matriz objetivo.
+        
+        Returns:
+            bool: True si todas las casillas marcadas en el tablero actual coinciden con las casillas marcadas en la matriz objetivo, False en caso contrario.
+        """
+        for row in range(len(self.tablero)):
+            for col in range(len(self.tablero[row])):
+                color = self.tablero[row][col].get_color()
+                objetivo = self.matriz_objetivo[row][col]
+                if color != Colores.DEFAULT.value:
+                    if (color == Colores.BLACK.value and objetivo != 1) or \
+                    (color == Colores.RED.value and objetivo != 2) or \
+                    (color == Colores.GREEN.value and objetivo != 3) or \
+                    (color == Colores.BLUE.value and objetivo != 4):
+                        return False
+        return True            
    
     def get_size_matriz(self):
         return self.size_matriz
@@ -153,14 +183,16 @@ class Nivel:
         secuencias_columna (List[List[Tuple[int, int]]]): Las secuencias de la matriz objetivo por columna.
         completado (bool): True si el nivel esta completado, False en caso contrario.
         tablero (Tablero): El tablero del nivel.
+        vidas (int): La cantidad de vidas del nivel.
     """
-    def __init__(self, matriz_objetivo, id):
+    def __init__(self, matriz_objetivo, id, vidas):
         """
         Inicializa un nivel con la matriz objetivo y el identificador.
         
         Args:
             matriz_objetivo (List[List[int]]): La matriz objetivo que se debe alcanzar.
             id (int): El identificador del nivel.
+            vidas (int): La cantidad de vidas del nivel.
         """
         self.altura_barra_superior = SettingsManager.SIZE_BARRA_SUPERIOR.value
         self.matriz_objetivo = matriz_objetivo
@@ -170,6 +202,7 @@ class Nivel:
         self.secuencias_columna = self.__calcular_secuencias_columna__(matriz_objetivo)
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
+        self.vidas = vidas
         
     def __calcular_secuencias__(self, linea):
         """
@@ -381,6 +414,13 @@ class Nivel:
         return self.matriz_objetivo
 
     
+    def set_tablero(self, tablero):
+        self.tablero = tablero
+    
+    def get_matriz(self):
+        return self.matriz_objetivo
+
+    
 class Partida:
     """
     Representa una partida del juego.
@@ -416,6 +456,9 @@ class Partida:
         #Botones
         self.fuente = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
         self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
+        self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
+        self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
+        self.botones = [self.boton_salir, self.boton_reiniciar]
         self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
         self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
         self.botones = [self.boton_salir, self.boton_reiniciar]
@@ -487,6 +530,9 @@ class Partida:
                 self.draw()
                 pygame.display.flip()
 
+                if not self.tablero.comparar():
+                    self.restar_vida()
+
                 for button in self.botones:
                     button.handle_event(event)    
                                              
@@ -496,7 +542,7 @@ class Partida:
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
-            pygame.display.flip()                           
+            pygame.display.flip()                          
                
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar():
@@ -504,6 +550,14 @@ class Partida:
                 self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                 self.reiniciar_nivel()
                 self.salir()
+
+    def restar_vida(self):
+        self.nivel.vidas -= 1
+        if self.nivel.vidas == 0:
+            self.mostrar_mensaje_animado("¡Has perdido!")
+            self.estadisticas.actualizar(self.get_tiempo_partida(), 0, 0, self.nivel.id)
+            self.reiniciar_nivel()
+            self.salir()
 
     def draw(self):
         self.nivel.draw(self.window)
@@ -515,6 +569,7 @@ class Partida:
         self.guardar_progreso(self.nivel.id) # guarda el progreso cuando sale den nivel
         self.running = False
         self.menu.volver_al_menu()
+
     def guardar_progreso(self, nivel_id):
         size = self.tablero.get_size_matriz()
         progreso = [[0 for _ in range(size)] for _ in range(size)]
@@ -538,15 +593,15 @@ class Partida:
         try:
             with open('levels\partidas\partidasencurso.json', 'r') as file:
                 partidas = json.load(file)
-        except FileNotFoundError:
-            partidas = []
+        except (FileNotFoundError, json.JSONDecodeError):
+            partidas = {}
 
         for partida in partidas:
             if partida['id'] == nivel_id:
                 partida['progreso'] = progreso
                 break
-        else:
-            partidas.append({'id': nivel_id, 'progreso': progreso})
+        
+        partidas[nivel_id] = {'progreso': progreso, 'vidas': self.nivel.vidas}
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
@@ -560,6 +615,7 @@ class Partida:
             for partida in partidas:
                 if partida['id'] == nivel_id:
                     progreso = partida['progreso']
+                    self.nivel.vidas = partida['vidas']
                     for row in range(self.tablero.get_size_matriz()):
                         for col in range(self.tablero.get_size_matriz()):
                             color = progreso[row][col]
@@ -582,6 +638,7 @@ class Partida:
         self.tablero = self.nivel.get_tablero()  # Reiniciar el tablero con la matriz objetivo original
         self.window.fill(SettingsManager.BACKGROUND_COLOR.value)  # Limpiar la ventana
         self.draw()  # Redibujar el tablero
+        self.nivel.vidas = 3 # Reiniciar las vidas
         pygame.display.flip()  # Actualizar la pantalla
 
 

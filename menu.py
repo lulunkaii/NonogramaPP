@@ -36,6 +36,8 @@ class Menu:
         self.fondo_imagen = pygame.transform.scale(self.fondo_imagen, (500, 716))
         self.frames_titulo = []
         self.frame_index_titulo = 0
+        self.size_borde = 10  
+        self.altura_barra_superior = 50  
         for i in range(1,24):
             img = pygame.image.load("resources/title/title_"+str(i)+".png")
             img = pygame.transform.scale(img, (200, 137))
@@ -237,7 +239,7 @@ class MenuSeleccionNivel(Menu):
             data = json.load(file)
         
         for nivel in data:
-            self.niveles.append(Nivel(nivel["matriz"], nivel["nombre"]))
+            self.niveles.append(Nivel(nivel["matriz"], nivel["nombre"], nivel.get("vidas", 3)))
 
         # Crear botones para los niveles
         
@@ -430,7 +432,8 @@ class MenuCrearNivel(Menu):
         Crea un nuevo nivel vacío y abre el apartado de creación de niveles.
         """
         nombre_nivel = self.pedir_nombre_nivel()
-        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel)
+        vidas = 3
+        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel, vidas)
         self.partida_en_curso = CrearNivel(self, nivel_vacio)
         self.partida_en_curso.run()
 
