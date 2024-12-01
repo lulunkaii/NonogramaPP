@@ -539,7 +539,27 @@ class Partida:
         print(f"Progreso guardado para nivel {nivel_id}: {progreso}")
 
     def cargar_progreso(self, nivel_id):
-       
+        try:
+            with open('levels/partidas/partidasencurso.json', 'r') as file:
+                partidas = json.load(file)
+            for partida in partidas:
+                if partida['id'] == nivel_id:
+                    progreso = partida['progreso']
+                    for row in range(self.tablero.get_size_matriz()):
+                        for col in range(self.tablero.get_size_matriz()):
+                            color = progreso[row][col]
+                            if color == 1:
+                                self.tablero.get_tablero()[row][col].click(Colores.BLACK.value)
+                            elif color == 2:
+                                self.tablero.get_tablero()[row][col].click(Colores.RED.value)
+                            elif color == 3:
+                                self.tablero.get_tablero()[row][col].click(Colores.GREEN.value)
+                            elif color == 4:
+                                self.tablero.get_tablero()[row][col].click(Colores.BLUE.value)
+                            else:
+                                self.tablero.get_tablero()[row][col].click(Colores.DEFAULT.value)
+                    break
+        except (FileNotFoundError, json.JSONDecodeError):
             pass
 
 
