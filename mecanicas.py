@@ -594,14 +594,14 @@ class Partida:
             with open('levels\partidas\partidasencurso.json', 'r') as file:
                 partidas = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError):
-            partidas = {}
+            partidas = []
 
         for partida in partidas:
             if partida['id'] == nivel_id:
                 partida['progreso'] = progreso
                 break
-        
-        partidas[nivel_id] = {'progreso': progreso, 'vidas': self.nivel.vidas}
+        partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas})
+        #partidas[nivel_id] = {'progreso': progreso, 'vidas': self.nivel.vidas}
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
