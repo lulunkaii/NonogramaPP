@@ -51,6 +51,7 @@ class Tablero:
         self.size_matriz = len(matriz_objetivo[0])
         self.size_celda = SettingsManager.CELL_SIZE.value
         self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
+        self.contadorFallo = 0
         self.font = pygame.font.SysFont(None, 24)
 
         # Variables para manejar el click
@@ -142,6 +143,7 @@ class Tablero:
         Returns:
             bool: True si todas las casillas marcadas en el tablero actual coinciden con las casillas marcadas en la matriz objetivo, False en caso contrario.
         """
+        contadorActual = 0
         for row in range(len(self.tablero)):
             for col in range(len(self.tablero[row])):
                 color = self.tablero[row][col].get_color()
@@ -151,8 +153,16 @@ class Tablero:
                     (color == Colores.RED.value and objetivo != 2) or \
                     (color == Colores.GREEN.value and objetivo != 3) or \
                     (color == Colores.BLUE.value and objetivo != 4):
-                        return False
-        return True            
+                        contadorActual -= 1
+                    else:
+                        contadorActual += 1
+
+        if contadorActual >= self.contadorFallo:
+            self.contadorFallo = contadorActual
+            return True
+        else:
+            self.contadorFallo = contadorActual
+            return False            
    
     def get_size_matriz(self):
         return self.size_matriz
@@ -362,6 +372,7 @@ class Nivel:
 
         self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
         
+        # Dibuja los corazones 
         for i in range(self.vidas):
             x = (self.size_borde + i) * 35
             y = (size_matriz + self.size_borde + 1) * SettingsManager.CELL_SIZE.value + self.altura_barra_superior + 10
@@ -415,29 +426,46 @@ class Nivel:
     
     def get_tablero(self):
         return self.tablero
-    
-    def set_tablero(self, tablero):
-        self.tablero = tablero
-    
-    def get_matriz(self):
-        return self.matriz_objetivo
 
-
-    
     def set_tablero(self, tablero):
         self.tablero = tablero
     
     def get_matriz(self):
         return self.matriz_objetivo
     
-    
-    def set_tablero(self, tablero):
-        self.tablero = tablero
-    
-    def get_matriz(self):
-        return self.matriz_objetivo
+class NivelConVidas(Nivel):
+    def __init__(self, matriz_objetivo, id, vidas):
+        super().__init__(matriz_objetivo, id, vidas)
+        self.vidas = vidas
+        self.frames_corazon = []
+        self.frames_index = 0
+        self.frame_counter = 0
+        self.frame_interval = 60  # Ajusta este valor para cambiar la velocidad de la animación
+        for i in range(1, 19):
+            img = pygame.image.load("resources/corazon/corazon" + str(i) + ".png")
+            img = pygame.transform.scale(img, (40, 40))
+            self.frames_corazon.append(img)
+        
+    def draw(self, surface):
+        super().draw(surface)
+        # Actualizar el índice de los frames
+        self.frame_counter += 1
+        if self.frame_counter >= self.frame_interval:
+            self.frames_index = (self.frames_index + 1) % len(self.frames_corazon)
+            self.frame_counter = 0      
 
-    
+class NivelClasico(NivelConVidas):
+    def __init__(self, matriz_objetivo, id, vidas):
+        super().__init__(matriz_objetivo, id, vidas)
+
+class NivelHardcore(NivelConVidas):
+    def __init__(self, matriz_objetivo, id):
+        super().__init__(matriz_objetivo, id, 1)
+
+class NivelContrareloj(Nivel):
+    def __init__(self, matriz_objetivo, id):
+        super().__init__(matriz_objetivo, id)
+
 class Partida:
     """
     Representa una partida del juego.
@@ -540,19 +568,21 @@ class Partida:
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.nivel.handle_click(event.pos)
 
-                # Redibujar el tablero después del clic
-                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.draw()
-                pygame.display.flip()
-
                 if not self.tablero.comparar():
                     self.restar_vida()
 
                 for button in self.botones:
                     button.handle_event(event)    
+                
+                # Redibujar el tablero después del clic
+                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+                self.draw()
+                pygame.display.flip()
                                              
         if pygame.mouse.get_pressed()[0]:
-            self.nivel.handle_click(pygame.mouse.get_pos(), True)                          
+            self.nivel.handle_click(pygame.mouse.get_pos(), True)    
+            if not self.tablero.comparar():
+                    self.restar_vida()                      
 
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
