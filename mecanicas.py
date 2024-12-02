@@ -51,7 +51,8 @@ class Tablero:
         self.size_matriz = len(matriz_objetivo[0])
         self.size_celda = SettingsManager.CELL_SIZE.value
         self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
-        self.contadorFallo = 0
+        self.contadorMalas = 0
+        self.contadorBuenas = 0
         self.font = pygame.font.SysFont(None, 24)
 
         # Variables para manejar el click
@@ -143,7 +144,8 @@ class Tablero:
         Returns:
             bool: True si todas las casillas marcadas en el tablero actual coinciden con las casillas marcadas en la matriz objetivo, False en caso contrario.
         """
-        contadorActual = 0
+        contadorActualBuenas = 0
+        contadorActualMalas = 0
         for row in range(len(self.tablero)):
             for col in range(len(self.tablero[row])):
                 color = self.tablero[row][col].get_color()
@@ -153,15 +155,13 @@ class Tablero:
                     (color == Colores.RED.value and objetivo != 2) or \
                     (color == Colores.GREEN.value and objetivo != 3) or \
                     (color == Colores.BLUE.value and objetivo != 4):
-                        contadorActual -= 1
-                    else:
-                        contadorActual += 1
+                        contadorActualMalas += 1
 
-        if contadorActual >= self.contadorFallo:
-            self.contadorFallo = contadorActual
+        if contadorActualMalas <= self.contadorMalas:
+            self.contadorMalas = contadorActualMalas
             return True
         else:
-            self.contadorFallo = contadorActual
+            self.contadorMalas = contadorActualMalas
             return False            
    
     def get_size_matriz(self):
@@ -185,7 +185,7 @@ class Nivel:
         tablero (Tablero): El tablero del nivel.
         vidas (int): La cantidad de vidas del nivel.
     """
-    def __init__(self, matriz_objetivo, id, vidas):
+    def __init__(self, matriz_objetivo, id):
         """
         Inicializa un nivel con la matriz objetivo y el identificador.
         
@@ -202,15 +202,6 @@ class Nivel:
         self.secuencias_columna = self.__calcular_secuencias_columna__(matriz_objetivo)
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
-        self.vidas = vidas
-        self.frames_corazon = []
-        self.frames_index = 0
-        self.frame_counter = 0
-        self.frame_interval = 60  # Ajusta este valor para cambiar la velocidad de la animación
-        for i in range(1, 19):
-            img = pygame.image.load("resources/corazon/corazon" + str(i) + ".png")
-            img = pygame.transform.scale(img, (40, 40))
-            self.frames_corazon.append(img)
         
     def __calcular_secuencias__(self, linea):
         """
@@ -371,18 +362,6 @@ class Nivel:
             pygame.draw.circle(surface, color.value, ((self.size_borde+0.5+index)*SettingsManager.CELL_SIZE.value , (size_matriz+self.size_borde+0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior), 10)
 
         self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
-        
-        # Dibuja los corazones 
-        for i in range(self.vidas):
-            x = (self.size_borde + i) * 35
-            y = (size_matriz + self.size_borde + 1) * SettingsManager.CELL_SIZE.value + self.altura_barra_superior + 10
-            surface.blit(self.frames_corazon[self.frames_index], ((self.size_borde+5.3+i*1.1)*SettingsManager.CELL_SIZE.value,(size_matriz + self.size_borde - 0.08)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior))
-
-        # Actualizar el índice de los frames
-        self.frame_counter += 1
-        if self.frame_counter >= self.frame_interval:
-            self.frames_index = (self.frames_index + 1) % len(self.frames_corazon)
-            self.frame_counter = 0
                             
     def verificar(self):
         """
@@ -435,7 +414,7 @@ class Nivel:
     
 class NivelConVidas(Nivel):
     def __init__(self, matriz_objetivo, id, vidas):
-        super().__init__(matriz_objetivo, id, vidas)
+        super().__init__(matriz_objetivo, id)
         self.vidas = vidas
         self.frames_corazon = []
         self.frames_index = 0
@@ -448,6 +427,11 @@ class NivelConVidas(Nivel):
         
     def draw(self, surface):
         super().draw(surface)
+        size_matriz = self.tablero.get_size_matriz()
+
+        for i in range(self.vidas):
+            surface.blit(self.frames_corazon[self.frames_index], ((self.size_borde+5.3+i*1.1)*SettingsManager.CELL_SIZE.value,(size_matriz + self.size_borde - 0.08)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior))
+
         # Actualizar el índice de los frames
         self.frame_counter += 1
         if self.frame_counter >= self.frame_interval:
