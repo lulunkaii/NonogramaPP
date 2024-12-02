@@ -1,10 +1,6 @@
 import pygame, math, json, random 
 from utils import SettingsManager, Colores, Boton
 
-# Carga de sonidos
-pygame.mixer.init()
-sonido_click = pygame.mixer.Sound("resources/sounds/sonidochill.wav")
-
 class Celda:
     """
     Representa una celda unica con su color.
@@ -25,7 +21,6 @@ class Celda:
         Args:
             color (Color): El nuevo color de la celda (si es su color actual se le pone el default).
         """
-        sonido_click.play()
         if(color == self.color):
             self.color = Colores.DEFAULT.value
         else:    
@@ -60,10 +55,7 @@ class Tablero:
         # Variables para manejar el click
         self.celda_anterior = None
         self.color_arrastre = None
-        self.celda_anterior = None
-        self.color_arrastre = None
         self.color_seleccionado = Colores.BLACK.value
-        self.color_anterior = self.color_seleccionado
         self.color_anterior = self.color_seleccionado
         
     def verificar(self):
@@ -124,14 +116,6 @@ class Tablero:
                 if self.tablero[row][col].get_color() != self.color_arrastre: 
                     self.tablero[row][col].click(self.color_seleccionado)                             
             elif not presionando:
-                self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
-                if self.color_seleccionado == Colores.DEFAULT.value:
-                    self.tablero[row][col].click(self.color_seleccionado)                    
-                else:
-                     self.tablero[row][col].click(self.color_seleccionado)
-                     self.color_anterior = self.color_seleccionado  # Recordar el color actual
-                     self.color_seleccionado = self.tablero[row][col].get_color()
-                     self.color_arrastre = self.tablero[row][col].get_color()
                 self.color_seleccionado = self.color_anterior  # Restaurar el color anterior
                 if self.color_seleccionado == Colores.DEFAULT.value:
                     self.tablero[row][col].click(self.color_seleccionado)                    
@@ -418,6 +402,14 @@ class Nivel:
     def get_matriz(self):
         return self.matriz_objetivo
 
+
+    
+    def set_tablero(self, tablero):
+        self.tablero = tablero
+    
+    def get_matriz(self):
+        return self.matriz_objetivo
+    
     
     def set_tablero(self, tablero):
         self.tablero = tablero
@@ -463,9 +455,7 @@ class Partida:
         self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
         self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
         self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
-        self.botones = [self.boton_salir, self.boton_reiniciar]
-        self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
-        self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
+       # self.boton_volver = Boton("Volver", )
         self.botones = [self.boton_salir, self.boton_reiniciar]
 
         #Estadisticas
@@ -570,7 +560,6 @@ class Partida:
             button.draw(self.window)
 
     def salir(self):
-        print("saliendo de nivel...")
         self.guardar_progreso(self.nivel.id) # guarda el progreso cuando sale den nivel
         self.running = False
         self.menu.volver_al_menu()
@@ -598,7 +587,7 @@ class Partida:
         try:
             with open('levels\partidas\partidasencurso.json', 'r') as file:
                 partidas = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
             partidas = []
 
         for partida in partidas:
@@ -611,7 +600,6 @@ class Partida:
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
 
-        print(f"Progreso guardado para nivel {nivel_id}: {progreso}")
 
     def cargar_progreso(self, nivel_id):
         try:
