@@ -193,6 +193,14 @@ class Nivel:
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
         self.vidas = vidas
+        self.frames_corazon = []
+        self.frames_index = 0
+        self.frame_counter = 0
+        self.frame_interval = 60  # Ajusta este valor para cambiar la velocidad de la animación
+        for i in range(1, 19):
+            img = pygame.image.load("resources/corazon/corazon" + str(i) + ".png")
+            img = pygame.transform.scale(img, (40, 40))
+            self.frames_corazon.append(img)
         
     def __calcular_secuencias__(self, linea):
         """
@@ -353,6 +361,17 @@ class Nivel:
             pygame.draw.circle(surface, color.value, ((self.size_borde+0.5+index)*SettingsManager.CELL_SIZE.value , (size_matriz+self.size_borde+0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior), 10)
 
         self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
+        
+        for i in range(self.vidas):
+            x = (self.size_borde + i) * 35
+            y = (size_matriz + self.size_borde + 1) * SettingsManager.CELL_SIZE.value + self.altura_barra_superior + 10
+            surface.blit(self.frames_corazon[self.frames_index], ((self.size_borde+5.3+i*1.1)*SettingsManager.CELL_SIZE.value,(size_matriz + self.size_borde - 0.08)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior))
+
+        # Actualizar el índice de los frames
+        self.frame_counter += 1
+        if self.frame_counter >= self.frame_interval:
+            self.frames_index = (self.frames_index + 1) % len(self.frames_corazon)
+            self.frame_counter = 0
                             
     def verificar(self):
         """
