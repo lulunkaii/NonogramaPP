@@ -1,5 +1,6 @@
 import pygame, math, json, random 
 from utils import SettingsManager, Colores, Boton
+import os
 
 class Celda:
     """
@@ -583,6 +584,14 @@ class Partida:
                     color = 4 
 
                 progreso[row][col] = color
+
+        # Asegurarse de que el directorio exista
+        os.makedirs('levels/partidas', exist_ok=True)
+
+        # Crear el archivo si no existe
+        if not os.path.exists('levels/partidas/partidasencurso.json'):
+            with open('levels/partidas/partidasencurso.json', 'w') as file:
+                json.dump([], file)     
             
         try:
             with open('levels\partidas\partidasencurso.json', 'r') as file:

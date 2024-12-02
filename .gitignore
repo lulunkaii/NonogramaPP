@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 settings.json
 estadisticas.json
+partidasencurso.json
 __pycache__/
 *.py[cod]
 *$py.class
