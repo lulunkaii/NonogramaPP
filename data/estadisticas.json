@@ -2,11 +2,13 @@
     {
         "id": 1,
         "nombre": "Usuario 1",
-        "segundos_jugados": 35,
+        "segundos_jugados": 55,
         "niveles_superados": 2,
         "puntuacion_total": 3,
         "niveles_completados": [
-            "Nivel1-Nieve"
+            "Nivel1-Nieve",
+            "hola",
+            "Nivel7-Nieve"
         ]
     }
 ]

@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 settings.json
+estadisticas.json
 __pycache__/
 *.py[cod]
 *$py.class
