@@ -1,6 +1,6 @@
 import pygame, math, json, random 
 from utils import SettingsManager, Colores, Boton
-import os
+import os, time
 
 class Celda:
     """
@@ -202,6 +202,7 @@ class Nivel:
         self.secuencias_columna = self.__calcular_secuencias_columna__(matriz_objetivo)
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
+        self.tipo_nivel = ""
         
     def __calcular_secuencias__(self, linea):
         """
@@ -388,6 +389,9 @@ class Nivel:
         """
         self.tablero.handle_click(pos, self.size_borde, presionando)
     
+    def get_tipo(self):
+        return self.tipo_nivel
+    
     def get_id(self):
         return self.id
     
@@ -438,17 +442,47 @@ class NivelConVidas(Nivel):
             self.frames_index = (self.frames_index + 1) % len(self.frames_corazon)
             self.frame_counter = 0      
 
+    def handle_click(self, pos, presionando=False):
+        super().handle_click(pos, presionando)
+        if not self.tablero.comparar():
+            self.vidas -= 1 
+
 class NivelClasico(NivelConVidas):
     def __init__(self, matriz_objetivo, id, vidas):
         super().__init__(matriz_objetivo, id, vidas)
+        self.tipo_nivel = "clasico"
 
 class NivelHardcore(NivelConVidas):
     def __init__(self, matriz_objetivo, id):
         super().__init__(matriz_objetivo, id, 1)
+        self.tipo_nivel = "hardcore"
 
-class NivelContrareloj(Nivel):
-    def __init__(self, matriz_objetivo, id):
+class NivelContrarreloj(Nivel):
+    def __init__(self, matriz_objetivo, id, tiempo = 15):
         super().__init__(matriz_objetivo, id)
+        self.tiempo_maximo = tiempo
+        self.tiempo_inicio = time.time()
+        self.tiempo_restante = tiempo
+        self.tipo_nivel = "contrarreloj"
+    
+    def actualizar_timer(self):
+        tiempo_actual = time.time()
+        tiempo_transcurrido = tiempo_actual - self.tiempo_inicio
+        if tiempo_transcurrido >= self.tiempo_maximo:
+            return True
+        else:
+            self.tiempo_restante = self.tiempo_maximo - tiempo_transcurrido
+            return False
+    
+    def get_tiempo_restante(self):
+        return self.tiempo_restante
+    
+    def set_tiempo_inicio(self, tiempo):
+        self.tiempo_inicio = tiempo
+
+    def reiniciar_tiempo(self):
+        self.tiempo_inicio = time.time()
+        self.tiempo_restante = self.tiempo_maximo
 
 class Partida:
     """
@@ -470,6 +504,7 @@ class Partida:
         """
         self.nivel = nivel
         size_tablero = nivel.get_size_matriz()
+        self.tipo_nivel = self.nivel.get_tipo()
         
         #Referencia a menu 
         self.menu = menu
@@ -551,9 +586,8 @@ class Partida:
                 self.running = False 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 self.nivel.handle_click(event.pos)
-
-                if not self.tablero.comparar():
-                    self.restar_vida()
+                if self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore":
+                    self.comprobar_vidas()
 
                 for button in self.botones:
                     button.handle_event(event)    
@@ -564,10 +598,10 @@ class Partida:
                 pygame.display.flip()
                                              
         if pygame.mouse.get_pressed()[0]:
-            self.nivel.handle_click(pygame.mouse.get_pos(), True)    
-            if not self.tablero.comparar():
-                    self.restar_vida()                      
-
+            self.nivel.handle_click(pygame.mouse.get_pos(), True)
+            if self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore":
+                self.comprobar_vidas()
+                
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
@@ -580,13 +614,12 @@ class Partida:
                 self.reiniciar_nivel()
                 self.salir()
 
-    def restar_vida(self):
-        self.nivel.vidas -= 1
+    def comprobar_vidas(self):
         if self.nivel.vidas == 0:
             self.mostrar_mensaje_animado("¡Has perdido!")
             self.estadisticas.actualizar(self.get_tiempo_partida(), 0, 0, self.nivel.id)
             self.reiniciar_nivel()
-            self.salir()
+            self.salir()   
 
     def draw(self):
         self.nivel.draw(self.window)
@@ -636,8 +669,11 @@ class Partida:
             if partida['id'] == nivel_id:
                 partida['progreso'] = progreso
                 break
-        partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas})
-        #partidas[nivel_id] = {'progreso': progreso, 'vidas': self.nivel.vidas}
+        
+        if(self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore"):
+            partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas, 'tipo': self.tipo_nivel})
+        elif(self.tipo_nivel == "contrarreloj"):
+            partidas.append({'id': nivel_id, 'progreso': progreso, 'tiempo': self.nivel.get_tiempo_restante(), 'tipo': self.tipo_nivel})
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
@@ -650,7 +686,11 @@ class Partida:
             for partida in partidas:
                 if partida['id'] == nivel_id:
                     progreso = partida['progreso']
-                    self.nivel.vidas = partida['vidas']
+                    if partida['tipo'] == 'clasico' or partida['tipo'] == 'hardcore':
+                        self.nivel.vidas = partida['vidas']
+                    elif partida['tipo'] == 'contrarreloj':
+                        self.nivel.set_tiempo_inicio(self.nivel.tiempo_inicio - self.nivel.tiempo_maximo + partida['tiempo'])
+                        self.nivel.tiempo_restante = partida['tiempo']
                     for row in range(self.tablero.get_size_matriz()):
                         for col in range(self.tablero.get_size_matriz()):
                             color = progreso[row][col]
@@ -672,17 +712,29 @@ class Partida:
         self.nivel.set_tablero(Tablero(self.nivel.get_matriz()))
         self.tablero = self.nivel.get_tablero()  # Reiniciar el tablero con la matriz objetivo original
         self.window.fill(SettingsManager.BACKGROUND_COLOR.value)  # Limpiar la ventana
+        
+        if self.tipo_nivel == "clasico":
+            self.nivel.vidas = 3 # Reiniciar las vidas
+        elif self.tipo_nivel == "hardcore":
+            self.nivel.vidas = 1
+        elif self.tipo_nivel == "contrarreloj":
+            self.nivel.reiniciar_tiempo()
+        
         self.draw()  # Redibujar el tablero
-        self.nivel.vidas = 3 # Reiniciar las vidas
         pygame.display.flip()  # Actualizar la pantalla
-
-
-
 
     def run(self):
         self.tiempo_inicio = pygame.time.get_ticks()
         self.running = True
         while self.running:
+            if self.tipo_nivel == "contrarreloj":
+                finalizado = self.nivel.actualizar_timer()
+                if finalizado:
+                    self.mostrar_mensaje_animado("¡Has perdido!")
+                    self.estadisticas.actualizar(self.get_tiempo_partida(), 0, 0, self.nivel.id)
+                    self.reiniciar_nivel()
+                    self.salir()   
+
             self.clock.tick(1000)
             self.handle_events()         
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)

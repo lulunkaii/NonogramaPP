@@ -1,5 +1,5 @@
 import pygame, json
-from mecanicas import Partida, Nivel, NivelConVidas, NivelContrareloj, NivelClasico, NivelHardcore, Estadisticas, CrearNivel
+from mecanicas import Partida, Nivel, NivelConVidas, NivelContrarreloj, NivelClasico, NivelHardcore, Estadisticas, CrearNivel
 from utils import SettingsManager, Boton, BotonSeleccionNivel
 import ambiente as amb
 
@@ -241,7 +241,7 @@ class MenuSeleccionNivel(Menu):
             data = json.load(file)
         
         for nivel in data:
-            self.niveles.append(NivelConVidas(nivel["matriz"], nivel["nombre"], nivel.get("vidas", 3)))
+            self.niveles.append(NivelContrarreloj(nivel["matriz"], nivel["nombre"]))
 
         # Crear botones para los niveles
         
