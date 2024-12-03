@@ -185,7 +185,7 @@ class Nivel:
         tablero (Tablero): El tablero del nivel.
         vidas (int): La cantidad de vidas del nivel.
     """
-    def __init__(self, matriz_objetivo, id):
+    def __init__(self, matriz_objetivo, id, contrarreloj=0):
         """
         Inicializa un nivel con la matriz objetivo y el identificador.
         
@@ -203,6 +203,7 @@ class Nivel:
         self.completado = False
         self.tablero = Tablero(matriz_objetivo)
         self.tipo_nivel = ""
+        self.tiempo_contrarreloj = contrarreloj
         
     def __calcular_secuencias__(self, linea):
         """
@@ -483,6 +484,17 @@ class NivelContrarreloj(Nivel):
     def reiniciar_tiempo(self):
         self.tiempo_inicio = time.time()
         self.tiempo_restante = self.tiempo_maximo
+    
+    def draw(self, surface):
+        super().draw(surface)
+
+        font = pygame.font.SysFont("Trebuchet MS", 20)
+        tiempo_restante_limitado = "{:.2f}".format(self.tiempo_restante)
+        text = font.render(tiempo_restante_limitado, True, (255, 255, 255))  # Texto en color blanco
+        text_rect = text.get_rect(center=((self.size_borde+8)*SettingsManager.CELL_SIZE.value,(self.tablero.get_size_matriz() + self.size_borde + 0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior))  # Centrar el texto en la superficie
+
+        # Dibujar el texto en la superficie
+        surface.blit(text, text_rect)
 
 class Partida:
     """

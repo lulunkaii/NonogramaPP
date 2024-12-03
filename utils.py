@@ -14,7 +14,8 @@ class SettingsManager(Enum):
     GRID_BACKGROUND_COLOR = (0, 155, 155)
     TITLE_BAR_COLOR = (100, 100, 100)
     SIZE_BARRA_SUPERIOR = 50
-    DEFAULT_COLOR = (255, 255, 255) 
+    DEFAULT_COLOR = (255, 255, 255)
+    SELECCION_MODO_COLOR = (255, 255, 255, 192)
 
 class Colores(Enum):
     DEFAULT = (255, 255, 255)
