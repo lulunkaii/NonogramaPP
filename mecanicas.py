@@ -549,11 +549,12 @@ class Partida:
         
     def mostrar_animacion_victoria(self, mensaje):
         alpha = 0
-        texto = self.fuente_victoria.render(mensaje, True, SettingsManager.COLOR_SELECTOR_COLOR.value)
+        texto = self.fuente_victoria.render(mensaje, True, SettingsManager.VICTORIA_COLOR.value)
         rect = texto.get_rect(center=(self.ancho_ventana // 2, self.altura_ventana // 2))
 
         # Dibujar un rectángulo blanco detrás del texto
         padding = 20  # Espacio adicional alrededor del texto
+        rect_fondo = pygame.Rect(rect.left - padding, rect.top - padding, rect.width + 2 * padding, rect.height + 2 * padding)
         
 
         # Crear una superficie transparente para el texto
@@ -565,23 +566,26 @@ class Partida:
 
         # Animar la aparición del texto y los fuegos artificiales
         for alpha in range(0, 256, 5):
-            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+            self.window.fill(SettingsManager.BACKGROUND_COLOR.value)  # Limpiar la pantalla
             self.draw()
-
-            # Renderizar el texto con la opacidad actual
-            text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
-            text_surface.blit(texto, (padding, padding))
-            text_surface.set_alpha(alpha)
 
             # Dibujar fuegos artificiales
             for firework in fireworks:
                 firework.update()
                 firework.draw(self.window)
-
-            # Blit la superficie del texto en la ventana principal
-            self.window.blit(text_surface, (rect.left - padding, rect.top - padding))
+            
             pygame.display.flip()
-            pygame.time.wait(30)  # Espera un poco para crear el efecto de animación
+            pygame.time.delay(30)
+        
+        for alpha in range(0, 256, 5):
+            pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, rect_fondo)
+
+            text_surface.blit(texto, (padding, padding))
+            text_surface.set_alpha(alpha)
+            self.window.blit(text_surface, rect_fondo.topleft)
+
+            pygame.display.flip()
+            pygame.time.delay(30)
 
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
@@ -593,21 +597,21 @@ class Partida:
 
             # Dibujar un rectángulo blanco detrás del texto
             padding = 20  # Espacio adicional alrededor del texto
+            rect_fondo = pygame.Rect(rect.left - padding, rect.top - padding, rect.width + 2 * padding, rect.height + 2 * padding)
            
 
             # Crear una superficie transparente para el texto
             text_surface = pygame.Surface((rect.width + 2 * padding, rect.height + 2 * padding), pygame.SRCALPHA)
             text_surface.fill((255, 255, 255, 0))  # Fondo transparente
 
+            self.draw()
             # Crear caras enojadas
             caquita = Caquita(self.window, self.ancho_ventana, self.altura_ventana)
             caquita.mostrar_animacion()  
 
             # Animar la aparición del texto
             for alpha in range(0, 256, 5):
-                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
-                self.draw()
-
+                pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, rect_fondo)
                 # Renderizar el texto con la opacidad actual
                 text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
                 text_surface.blit(texto, (padding, padding))
@@ -713,15 +717,23 @@ class Partida:
         except FileNotFoundError:
             partidas = []
 
+        nivel_actualizado = False
         for partida in partidas:
             if partida['id'] == nivel_id:
                 partida['progreso'] = progreso
+                if self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore":
+                    partida['vidas'] = self.nivel.vidas
+                elif self.tipo_nivel == "contrarreloj":
+                    partida['tiempo'] = self.nivel.get_tiempo_restante()
+                partida['tipo'] = self.tipo_nivel
+                nivel_actualizado = True
                 break
-        
-        if(self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore"):
-            partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas, 'tipo': self.tipo_nivel})
-        elif(self.tipo_nivel == "contrarreloj"):
-            partidas.append({'id': nivel_id, 'progreso': progreso, 'tiempo': self.nivel.get_tiempo_restante(), 'tipo': self.tipo_nivel})
+
+        if not nivel_actualizado:
+            if self.tipo_nivel == "clasico" or self.tipo_nivel == "hardcore":
+                partidas.append({'id': nivel_id, 'progreso': progreso, 'vidas': self.nivel.vidas, 'tipo': self.tipo_nivel})
+            elif self.tipo_nivel == "contrarreloj":
+                partidas.append({'id': nivel_id, 'progreso': progreso, 'tiempo': self.nivel.get_tiempo_restante(), 'tipo': self.tipo_nivel})
 
         with open('levels\partidas\partidasencurso.json', 'w') as file:
             json.dump(partidas, file, indent=1)
@@ -778,7 +790,7 @@ class Partida:
             if self.tipo_nivel == "contrarreloj":
                 finalizado = self.nivel.actualizar_timer()
                 if finalizado:
-                    self.mostrar_mensaje_animado("¡Has perdido!")
+                    self.mostrar_animacion_derrota("¡Has perdido!")
                     self.estadisticas.actualizar(self.get_tiempo_partida(), 0, 0, self.nivel.id)
                     self.reiniciar_nivel()
                     self.salir()   
@@ -1032,6 +1044,14 @@ class CrearNivel:
                 elif celda.get_color() == Colores.BLUE.value:
                     nueva_fila.append(4)
             matriz.append(nueva_fila)
+
+        # Asegurarse de que el directorio exista
+        os.makedirs('levels/creados', exist_ok=True)
+
+        # Crear el archivo si no existe
+        if not os.path.exists('levels/creados/levels.json'):
+            with open('levels/creados/levels.json', 'w') as file:
+                json.dump([], file)     
         
         with open('./levels/creados/levels.json') as file:
             try:
@@ -1040,7 +1060,8 @@ class CrearNivel:
                 data = []
             nivel = {
                 "nombre": self.nivel.id,
-                "matriz": matriz
+                "matriz": matriz,
+                "contrarreloj": 60
             }
             
             data.append(nivel)

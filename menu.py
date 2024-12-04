@@ -57,10 +57,9 @@ class Menu:
         self.boton_jugar = Boton("Seleccionar Nivel", (150, 235), (200, 50), self.font, self.ir_a_seleccion_nivel)
         self.boton_crear_nivel = Boton("Crear Nivel", (150, 295), (200, 50), self.font, self.crear_nivel)
         self.boton_estadisticas = Boton("Ver Estadísticas", (150, 355), (200, 50), self.font, self.ver_estadisticas)
-        self.boton_opciones = Boton("Opciones", (150, 415), (200, 50), self.font, self.opciones)
-        self.boton_salir = Boton("Salir", (150, 475), (200, 50), self.font, self.salir)
+        self.boton_salir = Boton("Salir", (150, 415), (200, 50), self.font, self.salir)
 
-        self.botones = [self.boton_jugar, self.boton_crear_nivel, self.boton_estadisticas, self.boton_opciones,self.boton_salir]
+        self.botones = [self.boton_jugar, self.boton_crear_nivel, self.boton_estadisticas,self.boton_salir]
         
     def ir_a_seleccion_nivel(self):
         """
@@ -466,8 +465,7 @@ class MenuCrearNivel(Menu):
         Crea un nuevo nivel vacío y abre el apartado de creación de niveles.
         """
         nombre_nivel = self.pedir_nombre_nivel()
-        vidas = 3
-        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel, vidas)
+        nivel_vacio = Nivel([[0] * SettingsManager.GRID_SIZE.value for _ in range(SettingsManager.GRID_SIZE.value)], nombre_nivel, 0)
         self.partida_en_curso = CrearNivel(self, nivel_vacio)
         self.partida_en_curso.run()
 

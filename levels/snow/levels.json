@@ -109,7 +109,7 @@
             [0,1,1,1,1,1,1,1,1,0],
             [0,1,1,1,1,1,1,1,1,0]
         ],
-        "contrarreloj": 15
+        "contrarreloj": 20
     },
     {
         "nombre": "Nivel8-Nieve",
@@ -121,7 +121,7 @@
             [0,1,0,0,1,0],
             [0,0,1,1,0,0]
         ],
-        "contrarreloj": 15
+        "contrarreloj": 20
     },
     {
         "nombre": "Nivel9-Nieve",
@@ -137,6 +137,6 @@
             [0,3,3,4,4,4,4,3,3,0],
             [0,0,0,3,3,3,3,0,0,0]
         ],
-        "contrarreloj": 20
+        "contrarreloj": 60
     }
 ]

@@ -16,6 +16,7 @@ class SettingsManager(Enum):
     SIZE_BARRA_SUPERIOR = 50
     DEFAULT_COLOR = (255, 255, 255)
     SELECCION_MODO_COLOR = (255, 255, 255, 192)
+    VICTORIA_COLOR = (0, 255, 0)
 
 class Colores(Enum):
     DEFAULT = (255, 255, 255)
