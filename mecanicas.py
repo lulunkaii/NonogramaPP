@@ -483,11 +483,11 @@ class Partida:
         self.running = False
 
         #Botones
-        self.fuente = pygame.font.SysFont(None, 35)  # Fuente para el mensaje
+        self.fuente_victoria = pygame.font.SysFont(None, int(self.ancho_ventana * 0.13))
+        self.fuente = pygame.font.SysFont(None, int(self.ancho_ventana * 0.20)) # Fuente para el mensaje
         self.fuente_boton = pygame.font.SysFont(None, self.altura_ventana // 20)
         self.boton_salir = Boton("Salir", (self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), ( 3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value/2), self.fuente_boton, self.salir)
         self.boton_reiniciar = Boton("Reiniciar", ( 5* self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 4), (3 * self.ancho_ventana // 9, SettingsManager.SIZE_BARRA_SUPERIOR.value / 2), self.fuente_boton, self.reiniciar_nivel)
-       # self.boton_volver = Boton("Volver", )
         self.botones = [self.boton_salir, self.boton_reiniciar]
 
         #Estadisticas
@@ -497,37 +497,30 @@ class Partida:
 
         #Cargar progreso
         self.tablero = self.nivel.get_tablero()
-        self.cargar_progreso(nivel.id)
+        self.cargar_progreso(nivel.id)   
 
-    def mostrar_mensaje_animado(self, mensaje):
+        
+    def mostrar_animacion_victoria(self, mensaje):
         alpha = 0
-        texto = self.fuente.render(mensaje, True, SettingsManager.BACKGROUND_COLOR.value)
+        texto = self.fuente_victoria.render(mensaje, True, SettingsManager.COLOR_SELECTOR_COLOR.value)
         rect = texto.get_rect(center=(self.ancho_ventana // 2, self.altura_ventana // 2))
 
         # Dibujar un rectángulo blanco detrás del texto
         padding = 20  # Espacio adicional alrededor del texto
-        background_rect = pygame.Rect(
-            rect.left - padding,
-            rect.top - padding,
-            rect.width + 2 * padding,
-            rect.height + 2 * padding
-        )
+        
 
         # Crear una superficie transparente para el texto
         text_surface = pygame.Surface((rect.width + 2 * padding, rect.height + 2 * padding), pygame.SRCALPHA)
         text_surface.fill((255, 255, 255, 0))  # Fondo transparente
 
         # Crear fuegos artificiales
-        fireworks = [Firework(random.randint(0, self.ancho_ventana), random.randint(0, self.altura_ventana)) for _ in range(300)]
+        fireworks = [Firework(random.randint(0, self.ancho_ventana), random.randint(0, self.altura_ventana)) for _ in range(55)]
 
         # Animar la aparición del texto y los fuegos artificiales
         for alpha in range(0, 256, 5):
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
 
-            # Dibujar el rectángulo de fondo
-            pygame.draw.rect(self.window, SettingsManager.DEFAULT_COLOR.value, background_rect)
- 
             # Renderizar el texto con la opacidad actual
             text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
             text_surface.blit(texto, (padding, padding))
@@ -545,6 +538,45 @@ class Partida:
 
         pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
 
+
+    def mostrar_animacion_derrota(self, mensaje):
+            alpha = 0
+            texto = self.fuente.render(mensaje, True, SettingsManager.COLOR_SELECTOR_COLOR.value)
+            rect = texto.get_rect(center=(self.ancho_ventana // 2, self.altura_ventana // 2))
+
+            # Dibujar un rectángulo blanco detrás del texto
+            padding = 20  # Espacio adicional alrededor del texto
+           
+
+            # Crear una superficie transparente para el texto
+            text_surface = pygame.Surface((rect.width + 2 * padding, rect.height + 2 * padding), pygame.SRCALPHA)
+            text_surface.fill((255, 255, 255, 0))  # Fondo transparente
+
+            # Crear caras enojadas
+            caquita = Caquita(self.window, self.ancho_ventana, self.altura_ventana)
+            caquita.mostrar_animacion()  
+
+            # Animar la aparición del texto
+            for alpha in range(0, 256, 5):
+                self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
+                self.draw()
+
+                # Renderizar el texto con la opacidad actual
+                text_surface.fill((255, 255, 255, 0))  # Limpiar la superficie
+                text_surface.blit(texto, (padding, padding))
+                text_surface.set_alpha(alpha)
+
+               
+
+                # Blit la superficie del texto en la ventana principal
+                self.window.blit(text_surface, (rect.left - padding, rect.top - padding))
+                pygame.display.flip()
+                pygame.time.wait(30)  # Espera un poco para crear el efecto de animación
+
+            pygame.time.wait(2000)  # Espera 2 segundos para que el mensaje sea visible
+
+
+    
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -571,11 +603,12 @@ class Partida:
             # Redibujar el tablero después del clic
             self.window.fill(SettingsManager.BACKGROUND_COLOR.value)
             self.draw()
-            pygame.display.flip()                          
-               
+            pygame.display.flip() 
+
+
             # Verificar si el nivel está completado después de procesar el clic
             if self.nivel.verificar():
-                self.mostrar_mensaje_animado("¡Nivel completado!")
+                self.mostrar_animacion_victoria("¡Nivel completado!")
                 self.estadisticas.actualizar(self.get_tiempo_partida(), 1, 0, self.nivel.id)
                 self.reiniciar_nivel()
                 self.salir()
@@ -583,7 +616,7 @@ class Partida:
     def restar_vida(self):
         self.nivel.vidas -= 1
         if self.nivel.vidas == 0:
-            self.mostrar_mensaje_animado("¡Has perdido!")
+            self.mostrar_animacion_derrota("¡Has perdido!")
             self.estadisticas.actualizar(self.get_tiempo_partida(), 0, 0, self.nivel.id)
             self.reiniciar_nivel()
             self.salir()
@@ -592,6 +625,9 @@ class Partida:
         self.nivel.draw(self.window)
         for button in self.botones:
             button.draw(self.window)
+
+        
+  
 
     def salir(self):
         self.guardar_progreso(self.nivel.id) # guarda el progreso cuando sale den nivel
@@ -691,12 +727,13 @@ class Partida:
         pygame.quit()
     
     def get_tiempo_partida(self):
+        
         if self.tiempo_inicio is not None:
             elapsed_time_ms = pygame.time.get_ticks() - self.tiempo_inicio
             return elapsed_time_ms // 1000  # Convertir a segundos
         return 0
     
-
+   
 class Estadisticas:
     """
     Representa las estadisticas de un jugador.
@@ -961,7 +998,7 @@ class Firework:
     def create_particles(self):
         for _ in range(100):
             size = random.randint(2, 5)
-            color = random.choice([pygame.Color('red'), pygame.Color('green'), pygame.Color('blue'), pygame.Color('yellow')])
+            color = random.choice([pygame.Color('purple'), pygame.Color('pink'), pygame.Color('blue'), pygame.Color('cyan')])
             speed_x = random.uniform(-2, 2)
             speed_y = random.uniform(-2, 2)
             self.particles.append([self.x, self.y, size, color, speed_x, speed_y])
@@ -975,3 +1012,31 @@ class Firework:
     def draw(self, surface):
         for particle in self.particles:
             pygame.draw.circle(surface, particle[3], (int(particle[0]), int(particle[1])), particle[2])
+
+class Caquita:
+    def __init__(self, surface, ancho_ventana, altura_ventana):
+        self.surface = surface
+        self.ancho_ventana = ancho_ventana
+        self.altura_ventana = altura_ventana
+        self.caras = []
+        self.imagen_caquita = pygame.image.load("resources/caquita/caquita.png")
+        self.imagen_caquita = pygame.transform.scale(self.imagen_caquita, (60, 60))  # Ajusta el tamaño según sea necesario
+        self.crear_caras()
+
+    def crear_caras(self):
+        filas = 5
+        columnas = 6
+        for  i in range(filas): 
+            x = i * self.ancho_ventana // filas
+            for j in range(columnas): 
+                y = j * self.altura_ventana // columnas
+                self.caras.append((x, y))
+
+    def dibujar_caquita(self, x, y):
+        self.surface.blit(self.imagen_caquita, (x, y))
+    def mostrar_animacion(self):
+        for _ in range(60):  # Duración de la animación
+            for x, y in self.caras:
+                self.dibujar_caquita(x, y)
+            pygame.display.flip()
+            pygame.time.wait(30)  # Espera un poco para crear el efecto de animación
