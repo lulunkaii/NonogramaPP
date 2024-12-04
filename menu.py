@@ -1,5 +1,5 @@
 import pygame, json
-from mecanicas import Partida, Nivel, NivelConVidas, NivelContrareloj, NivelClasico, NivelHardcore, Estadisticas, CrearNivel
+from mecanicas import Partida, Nivel, NivelConVidas, NivelContrarreloj, NivelClasico, NivelHardcore, Estadisticas, CrearNivel
 from utils import SettingsManager, Boton, BotonSeleccionNivel
 import ambiente as amb
 
@@ -78,6 +78,7 @@ class Menu:
         """
         partida = Partida(self, nivel)
         self.partida_en_curso = partida
+        pygame.time.delay(100)
         partida.run()
 
     def dibujar_menu(self):
@@ -211,8 +212,10 @@ class MenuSeleccionNivel(Menu):
         self.clock = None
         self.niveles = []
         self.botones_niveles = []
+        self.botones_modos = []
         self.boton_seleccionado = 0
         self.niveles_creados = niveles_creados
+        self.seleccionando_modo = False
 
         self.ambientes = {
             amb.AmbienteEnum.INVIERNO: amb.Ambiente(amb.AmbienteEnum.INVIERNO, "resources/environments/images/snowG.png", "resources/environments/music/invierno.ogg", range(1,10))
@@ -241,13 +244,13 @@ class MenuSeleccionNivel(Menu):
             data = json.load(file)
         
         for nivel in data:
-            self.niveles.append(NivelConVidas(nivel["matriz"], nivel["nombre"], nivel.get("vidas", 3)))
+            self.niveles.append(Nivel(nivel["matriz"], nivel["nombre"], nivel["contrarreloj"]))
 
         # Crear botones para los niveles
         
         for i, nivel in enumerate(self.niveles):
             x, y = self.pos_botones_ambiente_actual[i]  # Obtener posición del nivel
-            boton = BotonSeleccionNivel(x, y, lambda n=nivel: self.iniciar_partida(n), nivel.isCompleted())
+            boton = BotonSeleccionNivel(x, y, lambda n=nivel: self.seleccionar_modo(n), nivel.isCompleted())
             self.botones_niveles.append(boton)
 
         #self.boton_volver = Boton("Volver", (10, 380), (200, 50), self.font, self.volver_al_menu_principal)
@@ -258,8 +261,15 @@ class MenuSeleccionNivel(Menu):
         """
         fondo = pygame.transform.scale(self.ambiente_actual.get_fondo(), (600, 600))
         self.window.blit(fondo, (0, 0))
-        
+        if self.seleccionando_modo:
+            temp_surface = pygame.Surface((600, 600), pygame.SRCALPHA)
+            pygame.draw.circle(temp_surface, SettingsManager.SELECCION_MODO_COLOR.value, (int(6 * 600/12), int(6 * 600/12)), int(3 * 600/12))
+            self.window.blit(temp_surface, (0, 0))
+            
         for boton in self.botones_niveles:
+            boton.draw(self.window)
+
+        for boton in self.botones_modos:
             boton.draw(self.window)
         #self.boton_volver.draw(self.window)
 
@@ -302,21 +312,43 @@ class MenuSeleccionNivel(Menu):
                     elif event.key == pygame.K_RETURN:
                         self.botones_niveles[self.boton_seleccionado].action()
                         sonido_presion.play()
+
                 for boton in self.botones_niveles:
                     boton.handle_event(event)
+                for boton in self.botones_modos:
+                    boton.handle_event(event)   
             
-            self.clock.tick(10)
         pygame.quit()
 
-    def iniciar_partida(self, nivel):
+    def iniciar_partida(self, nivel, modo):
         """
         Inicia una partida con el nivel seleccionado.
         
         Args:
             nivel (Nivel): Nivel seleccionado.
         """
+        if modo == "clasico":
+            id = nivel.get_id() + "-Clasico"
+            nivel_nuevo = NivelClasico(nivel.get_matriz(), id, 3)
+        elif modo == "hardcore":
+            id = nivel.get_id() + "-Hardcore"
+            nivel_nuevo = NivelHardcore(nivel.get_matriz(), id)
+        elif modo == "contrarreloj":
+            id = nivel.get_id() + "-Contrarreloj"
+            nivel_nuevo = NivelContrarreloj(nivel.get_matriz(), id, nivel.tiempo_contrarreloj)
+
         self.cerrar_menu()
-        self.menu_principal.iniciar_partida(nivel)
+        self.botones_modos = []
+        self.seleccionando_modo = False
+        self.menu_principal.iniciar_partida(nivel_nuevo)
+
+    def seleccionar_modo(self, nivel):
+        font = pygame.font.SysFont("Trebuchet MS", 20)
+        self.seleccionando_modo = True
+        self.botones_modos.append(Boton("clasico", (9 * 600/24, 19 * 600/48), (6 * 600/24, 600/24), font, lambda n=nivel, modo="clasico": self.iniciar_partida(n, modo)))
+        self.botones_modos.append(Boton("hardcore", (9 * 600/24, 23 * 600/48), (6 * 600/24, 600/24), font, lambda n=nivel, modo="hardcore": self.iniciar_partida(n, modo)))
+        self.botones_modos.append(Boton("contrarreloj", (9 * 600/24, 27 * 600/48), (6 * 600/24, 600/24), font, lambda n=nivel, modo="contrarreloj": self.iniciar_partida(n, modo)))
+
 
     def volver_al_menu_principal(self):
         """
