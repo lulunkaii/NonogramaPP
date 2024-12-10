@@ -51,6 +51,8 @@ class Tablero:
         self.size_matriz = len(matriz_objetivo[0])
         self.size_celda = SettingsManager.CELL_SIZE.value
         self.tablero = [[Celda() for _ in range(self.size_matriz)] for _ in range(self.size_matriz)]
+        self.table_width = len(matriz_objetivo[0]) * SettingsManager.CELL_SIZE.value
+        self.table_height = len(matriz_objetivo) * SettingsManager.CELL_SIZE.value
         self.contadorMalas = 0
         self.contadorBuenas = 0
         self.font = pygame.font.SysFont(None, 24)
@@ -131,9 +133,9 @@ class Tablero:
             self.celda_anterior = self.tablero[row][col]
         
         for index, color in enumerate(Colores):
-            cx = (size_borde+0.5+index)*cell_size
+            cx = size_borde * cell_size + ((2*index + 1) * self.table_width / 20)
             cy = (size_tablero+size_borde+0.5)*cell_size + SettingsManager.SIZE_BARRA_SUPERIOR.value
-            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= 10:
+            if math.sqrt(pow(cx-pos[0], 2) + pow(cy-pos[1], 2)) <= self.table_width//30:
                 self.color_seleccionado = color.value   
                 self.color_anterior = self.color_seleccionado  
 
@@ -204,6 +206,8 @@ class Nivel:
         self.tablero = Tablero(matriz_objetivo)
         self.tipo_nivel = ""
         self.tiempo_contrarreloj = contrarreloj
+        self.table_width = len(matriz_objetivo[0]) * SettingsManager.CELL_SIZE.value
+        self.table_height = len(matriz_objetivo) * SettingsManager.CELL_SIZE.value
         
     def __calcular_secuencias__(self, linea):
         """
@@ -359,9 +363,9 @@ class Nivel:
                 pygame.draw.rect(surface, color, rect)
 
         # Dibujar selector de colores
-        pygame.draw.rect(surface, SettingsManager.COLOR_SELECTOR_COLOR.value, (0, (size_matriz+self.size_borde)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior,  (size_matriz+self.size_borde)*SettingsManager.CELL_SIZE.value, self.size_borde*SettingsManager.CELL_SIZE.value))
+        pygame.draw.rect(surface, SettingsManager.COLOR_SELECTOR_COLOR.value, (0, (size_matriz+self.size_borde)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior,  (size_matriz+self.size_borde)*SettingsManager.CELL_SIZE.value, SettingsManager.CELL_SIZE.value))
         for index, color in enumerate(Colores):
-            pygame.draw.circle(surface, color.value, ((self.size_borde+0.5+index)*SettingsManager.CELL_SIZE.value , (size_matriz+self.size_borde+0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior), 10)
+            pygame.draw.circle(surface, color.value, (self.size_borde * SettingsManager.CELL_SIZE.value + ((2*index+1) * self.table_width / 20) , (size_matriz+self.size_borde+0.5)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior), self.table_width//30)
 
         self.tablero.draw(surface, self.size_borde, self.altura_barra_superior) 
                             
@@ -427,15 +431,16 @@ class NivelConVidas(Nivel):
         self.frame_interval = 60  # Ajusta este valor para cambiar la velocidad de la animación
         for i in range(1, 19):
             img = pygame.image.load("resources/corazon/corazon" + str(i) + ".png")
-            img = pygame.transform.scale(img, (40, 40))
+            img = pygame.transform.scale(img, (self.table_width//10, self.table_width//10))
             self.frames_corazon.append(img)
         
     def draw(self, surface):
         super().draw(surface)
-        size_matriz = self.tablero.get_size_matriz()
 
-        for i in range(self.vidas):
-            surface.blit(self.frames_corazon[self.frames_index], ((self.size_borde+5.3+i*1.1)*SettingsManager.CELL_SIZE.value,(size_matriz + self.size_borde - 0.08)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior))
+        size_matriz = self.tablero.get_size_matriz()
+        pos_fin_colores = (len(Colores)*2 + 1) 
+        for i in range(1, self.vidas + 1):
+            surface.blit(self.frames_corazon[self.frames_index], (self.size_borde * SettingsManager.CELL_SIZE.value + pos_fin_colores * self.table_width/20 + (2*i) * self.table_width/20 ,(size_matriz + self.size_borde - 0.08)*SettingsManager.CELL_SIZE.value + self.altura_barra_superior + (SettingsManager.CELL_SIZE.value - self.table_width//10)/2))
 
         # Actualizar el índice de los frames
         self.frame_counter += 1

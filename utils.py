@@ -3,7 +3,7 @@ import pygame
 
 class SettingsManager(Enum):
     GRID_SIZE = 10
-    CELL_SIZE = 40
+    CELL_SIZE = 30
     COLOR_SELECTOR_COLOR = (128, 64, 0)
     BACKGROUND_COLOR = (0, 0, 0)
     MENU_BACKGROUND_COLOR = (50, 50, 50)
